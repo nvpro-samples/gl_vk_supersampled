@@ -1,4 +1,4 @@
-# Multiple rendering technique
+# Super-sampled rendering in Vulkan
 
 This sample show a Vulkan implementation of the super-sampled technique explained here:
 

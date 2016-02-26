@@ -190,6 +190,7 @@ bool MyWindow::init()
                     g_MSAA = pWin->GetItemData(selectedidx);
                     // involves some changes at the source of initialization... re-create all
                     MyWindow* p = reinterpret_cast<MyWindow*>(pWin->GetUserData());
+                    g_profiler.reset(1);
                     s_pCurRenderer->terminateGraphics();
                     s_pCurRenderer->initGraphics(p->m_winSz[0], p->m_winSz[1], g_Supersampling, g_MSAA);
                 }

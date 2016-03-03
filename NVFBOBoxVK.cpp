@@ -762,7 +762,7 @@ void NVFBOBoxVK::Draw(DownSamplingTechnique technique, int tilex, int tiley)//, 
 
 	if((scaleFactor > 1.0) || (tilesw > 1) || (tilesh > 1))
 	{
-        m_nvk.vkQueueSubmit(NVK::VkSubmitInfo(0, NULL, 1, m_cmdDownsample + (int)technique, 0, NULL),  NULL);
+        m_nvk.vkQueueSubmit(NVK::VkSubmitInfo(0, NULL, NULL, 1, m_cmdDownsample + (int)technique, 0, NULL),  NULL);
 	}
 }
 /*-------------------------------------------------------------------------

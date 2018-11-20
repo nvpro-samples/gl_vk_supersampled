@@ -26,7 +26,7 @@
 */ //--------------------------------------------------------------------
 #ifndef __HELPERFBO__
 #define __HELPERFBO__
-#include <GL/glew.h>
+#include <nv_helpers_gl/extensions_gl.hpp>
 namespace fbo
 {
     inline bool CheckStatus()
@@ -219,23 +219,25 @@ namespace texture
 {
     inline GLuint create(int w, int h, int samples, int coverageSamples, GLenum intfmt, GLenum fmt, GLuint textureID=0)
     {
-        if(textureID == 0)
-	        glGenTextures(1, &textureID);
         if(samples <= 1)
         {
-            glTextureStorage2DEXT(textureID, GL_TEXTURE_2D, 1, intfmt, w, h);
-            glTextureParameterfEXT( textureID, GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-	        glTextureParameterfEXT( textureID, GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-	        glTextureParameterfEXT( textureID, GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-	        glTextureParameterfEXT( textureID, GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+          if(textureID == 0)
+	          glCreateTextures(GL_TEXTURE_2D, 1, &textureID);
+          glTextureStorage2D(textureID, 1, intfmt, w, h);
+          glTextureParameterf( textureID, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	        glTextureParameterf( textureID, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	        glTextureParameterf( textureID, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	        glTextureParameterf( textureID, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
         } else {
-            // Note: fixed-samples set to GL_TRUE, otherwise it could fail when attaching to FBO having render-buffer !!
-            if(coverageSamples > 1)
-            {
-                glTextureImage2DMultisampleCoverageNV(textureID, GL_TEXTURE_2D_MULTISAMPLE, coverageSamples, samples, intfmt, w, h, GL_TRUE);
-            } else {
-                glTextureStorage2DMultisampleEXT(textureID, GL_TEXTURE_2D_MULTISAMPLE, samples, intfmt, w, h, GL_TRUE);
-            }
+          if(textureID == 0)
+	          glCreateTextures(GL_TEXTURE_2D_MULTISAMPLE, 1, &textureID);
+          // Note: fixed-samples set to GL_TRUE, otherwise it could fail when attaching to FBO having render-buffer !!
+          if(coverageSamples > 1)
+          {
+              glTextureImage2DMultisampleCoverageNV(textureID, GL_TEXTURE_2D_MULTISAMPLE, coverageSamples, samples, intfmt, w, h, GL_TRUE);
+          } else {
+              glTextureStorage2DMultisample(textureID, samples, intfmt, w, h, GL_TRUE);
+          }
         }
         return textureID;
     }

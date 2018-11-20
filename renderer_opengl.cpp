@@ -137,14 +137,14 @@ RendererStandard s_renderer;
 
 bool RendererStandard::initResourcesfur()
 {
-	glGenBuffers(1, &s_vbofur);
+	glCreateBuffers(1, &s_vbofur);
 	std::vector<Vertex> data;
 
     buildFur(data);
 
     s_nElmts = data.size();
 	s_vbofurSz = data.size() * sizeof(Vertex);
-	glNamedBufferDataEXT(s_vbofur, s_vbofurSz, &(data[0]), GL_STATIC_DRAW);
+	glNamedBufferData(s_vbofur, s_vbofurSz, &(data[0]), GL_STATIC_DRAW);
 	return true;
 }
 //------------------------------------------------------------------------------
@@ -175,7 +175,7 @@ void RendererStandard::display(const InertiaCamera& camera, const mat4f& project
 	//
 	g_globalMatrices.mP = projection;
 	g_globalMatrices.mV = camera.m4_view;
-	glNamedBufferSubDataEXT(g_uboMatrix.Id, 0, sizeof(g_globalMatrices), &g_globalMatrices);
+	glNamedBufferSubData(g_uboMatrix.Id, 0, sizeof(g_globalMatrices), &g_globalMatrices);
 	// ------------------------------------------------------------------------------------------
 	// Case of regular rendering
 	//
@@ -250,9 +250,9 @@ bool RendererStandard::initGraphics(int w, int h, float SSScale, int MSAA)
 	//
 	// Create some UBO for later share their 64 bits
 	//
-	glGenBuffers(1, &g_uboMatrix.Id);
+	glCreateBuffers(1, &g_uboMatrix.Id);
 	g_uboMatrix.Sz = sizeof(MatrixBufferGlobal);
-	glNamedBufferDataEXT(g_uboMatrix.Id, g_uboMatrix.Sz, &g_globalMatrices, GL_STREAM_DRAW);
+	glNamedBufferData(g_uboMatrix.Id, g_uboMatrix.Sz, &g_globalMatrices, GL_STREAM_DRAW);
 	//
 	// Misc OGL setup
 	//

@@ -47,11 +47,10 @@
 #endif
 
 #include "NVFBOBox.h"
-#include "GL/glew.h"
+#include <nv_helpers_gl/extensions_gl.hpp>
 
 //#include "Logging.h"
 //#include "glError.h"
-#define PRINTF(m) printf m
 
 #include <map>
 
@@ -129,7 +128,7 @@ void NVFBOBox::Finish()
 bool NVFBOBox::initRT()
 {
 	bool multisample = depthSamples > 1;
-	bool csaa = (coverageSamples > depthSamples) && (glRenderbufferStorageMultisampleCoverageNV != NULL);
+	bool csaa = (coverageSamples > depthSamples) && (has_GL_NV_texture_multisample);
 	bool ret = true;
 	int query;
 	if(bOneFBOPerTile)
@@ -198,7 +197,7 @@ bool NVFBOBox::resize(int w, int h, float ssfact, int depthSamples_, int coverag
 	bufh = (int)(scaleFactor*(float)height);
 
     bool multisample = depthSamples > 1;
-	bool csaa = (coverageSamples > depthSamples) && (glRenderbufferStorageMultisampleCoverageNV != NULL);
+	bool csaa = (coverageSamples > depthSamples) && (has_GL_NV_texture_multisample);
 	bool ret = true;
 
 	if(depth_texture)
@@ -562,7 +561,7 @@ void NVFBOBox::Activate(int tilex, int tiley, float m_frustum[][4])
 	glBindFramebuffer(GL_FRAMEBUFFER, depthSamples > 1 ? tileData[i].fbms : tileData[i].fb);
 
 	glPushAttrib(GL_VIEWPORT_BIT); 
-	glEnable(GL_MULTISAMPLE_ARB);
+	glEnable(GL_MULTISAMPLE);
 	glViewport(0, 0, bufw, bufh);
 	//
 	// Change the projection matrix
@@ -678,7 +677,7 @@ void pngFlushFn( png_structp png_ptr) {
   -------------------------------------------------------------------------*/
 void errorFn (png_structp p, png_const_charp pchr)
 {
-	printf("Error : %s\n", pchr);
+	LOGE("Error : %s\n", pchr);
 }
 #endif
 /*-------------------------------------------------------------------------

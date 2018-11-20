@@ -35,12 +35,12 @@
 using namespace nv_math;
 
 #include "GLSLShader.h"
-#include "nv_helpers_gl/profilertimersgl.hpp"
+#include "nv_helpers_gl/profilertimers_gl.hpp"
 
-#include "nv_helpers_gl/WindowInertiaCamera.h"
+#include "nv_helpers/appwindowcamerainertia.hpp"
 
-#include "svcmfcui.h"
 #ifdef USESVCUI
+#include "svcmfcui.h"
 #   define  LOGFLUSH()  { g_pWinHandler->HandleMessageLoop_OnePass(); }
 #else
 #   define  LOGFLUSH()
@@ -51,8 +51,9 @@ using namespace nv_math;
 #endif
 
 #if 1//def SUPPORT_PROFILE
-#define PROFILE_SECTION(name)   nv_helpers::Profiler::Section _tempTimer(g_profiler ,name, NULL)
-#define PROFILE_SPLIT()         g_profiler.accumulationSplit()
+#define PROFILE_SECTION(name)           nv_helpers::Profiler::Section _tempTimer(g_profiler, name, NULL)
+#define PROFILE_SECTION_CMD(name, cmd)  nv_helpers::Profiler::Section _tempTimer(g_profiler, name, NULL, false, (cmd))
+#define PROFILE_SPLIT()                 g_profiler.accumulationSplit()
 #else
 #define PROFILE_SECTION(name)
 #define PROFILE_SPLIT()
@@ -116,12 +117,12 @@ struct Vertex {
 class Renderer
 {
 public:
-	Renderer() {}
-	virtual ~Renderer() {}
-	virtual const char *getName() = 0;
-	virtual bool valid() = 0;
-	virtual bool initGraphics(int w, int h, float SSScale, int MSAA) = 0;
-	virtual bool terminateGraphics() = 0;
+    Renderer() {}
+    virtual ~Renderer() {}
+    virtual const char *getName() = 0;
+    virtual bool valid() = 0;
+    virtual bool initGraphics(int w, int h, float SSScale, int MSAA) = 0;
+    virtual bool terminateGraphics() = 0;
     virtual void waitForGPUIdle() {}
 
     virtual void display(const InertiaCamera& camera, const mat4f& projection) = 0;
@@ -136,8 +137,8 @@ public:
     //
     virtual nv_helpers::Profiler::GPUInterface* getTimerInterface() { return NULL; };
 };
-extern Renderer*	g_renderers[10];
-extern int			g_numRenderers;
+extern Renderer*    g_renderers[10];
+extern int            g_numRenderers;
 
 inline void buildStrand(std::vector<Vertex> &data, vec3f pos, vec3f dvec, vec3f nvec, vec2f &sz, int nsteps ,float curve, vec3 &color)
 {

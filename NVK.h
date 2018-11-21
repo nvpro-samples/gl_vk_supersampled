@@ -328,6 +328,7 @@ public:
     void                  destroySemaphore(VkSemaphore s);
     VkFence               createFence(VkFenceCreateFlags flags=0);
     void                  destroyFence(VkFence fence);
+    VkResult              getFenceStatus(VkFence fence);
     bool                  waitForFences(uint32_t fenceCount, const VkFence* pFences, VkBool32 waitAll, uint64_t timeout);
     void                  resetFences(uint32_t fenceCount, const VkFence* pFences);
 

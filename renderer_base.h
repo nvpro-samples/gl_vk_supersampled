@@ -127,6 +127,7 @@ public:
 
     virtual void display(const InertiaCamera& camera, const mat4f& projection) = 0;
 
+    virtual void updateMSAA(int MSAA) = 0;
     virtual void updateViewport(GLint x, GLint y, GLsizei width, GLsizei height, float SSFactor) = 0;
 
     virtual bool bFlipViewport() { return false; }

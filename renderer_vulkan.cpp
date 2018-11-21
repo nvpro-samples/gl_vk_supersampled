@@ -118,9 +118,8 @@ private:
     NVK::PipelineDepthStencilStateCreateInfo  m_vkPipelineDepthStencilStateCreateInfo;
     NVK::PipelineMultisampleStateCreateInfo   m_vkPipelineMultisampleStateCreateInfo;
 
+    void initRenderPassRelated();
 
-    bool    initRenderPassDependent();
-    bool    deleteRenderPassDependent();
 public:
   
   RendererVk() {
@@ -139,6 +138,8 @@ public:
   virtual void waitForGPUIdle();
 
   virtual void display(const InertiaCamera& camera, const mat4f& projection);
+
+    virtual void updateMSAA(int MSAA);
 
   virtual void updateViewport(GLint x, GLint y, GLsizei width, GLsizei height, float SSFactor);
 
@@ -405,9 +406,6 @@ bool RendererVk::initGraphics(int w, int h, float SSScale, int MSAA)
       NVK::StencilOpState(), NVK::StencilOpState(), //front, back
       0.0f, 1.0f                  //minDepthBounds, maxDepthBounds
     );
-    ::VkSampleMask sampleMask = 0xFFFF;
-    m_vkPipelineMultisampleStateCreateInfo = NVK::PipelineMultisampleStateCreateInfo(
-      (VkSampleCountFlagBits)m_MSAA /*rasterSamples*/, VK_FALSE /*sampleShadingEnable*/, 1.0 /*minSampleShading*/, &sampleMask /*sampleMask*/, VK_FALSE, VK_FALSE);
     //--------------------------------------------------------------------------
     // Load SpirV shaders
     //
@@ -497,6 +495,7 @@ bool RendererVk::initGraphics(int w, int h, float SSScale, int MSAA)
     //
     downsamplingMode = NVFBOBoxVK::DS2;
     m_nvFBOBox.Initialize(nvk, w, h, SSScale, MSAA);
+    updateViewport(0, 0, w, h, SSScale);
     return true;
 }
 //------------------------------------------------------------------------------
@@ -585,7 +584,8 @@ void RendererVk::display(const InertiaCamera& camera, const mat4f& projection)
   {
     while (nvk.waitForFences(1, &m_sceneFence[m_cmdSceneIdx], VK_TRUE, 100000000) == false)
     {
-      LOGW(">>>>>> WAIT FENCE");
+      LOGW(">>>>>> TIMEOUT ON WAIT FENCE\n");
+      break;
     }
     nvk.resetFences(1, &m_sceneFence[m_cmdSceneIdx]);
     m_cmdPool.utFreeCommandBuffers(&cmdBufferQueue2[0], cmdBufferQueue2.size()-1 ); // -1 bcause the last one comes from m_nvFBOBox and must be kept intact
@@ -613,22 +613,77 @@ void RendererVk::display(const InertiaCamera& camera, const mat4f& projection)
   //
   glEnable(GL_DEPTH_TEST);
 }
+
 //------------------------------------------------------------------------------
 //
 //------------------------------------------------------------------------------
-bool    RendererVk::initRenderPassDependent()
+void RendererVk::initRenderPassRelated()
 {
-  return true;
+  //
+  // Init 'pipelines'
+  //
+  if (m_pipelinefur)
+    vkDestroyPipeline(nvk.m_device, m_pipelinefur, NULL);
+  m_pipelinefur = NULL;
+  // we don't care about the viewport... will be dynamcically setup
+  NVK::PipelineViewportStateCreateInfo vkPipelineViewportStateCreateInfo(
+    NVK::Viewport(0.0f, 0.0f, (float)100, (float)100, 0.0f, 1.0f),
+    NVK::Rect2DArray(0.0f, 0.0f, (float)100, (float)100)
+  );
+  //
+  // Get the renderpass on which the pipeline will be used
+  //
+  VkRenderPass    renderPass = m_nvFBOBox.getScenePass();
+
+  ::VkSampleMask sampleMask = 0xFFFF;
+  m_vkPipelineMultisampleStateCreateInfo = NVK::PipelineMultisampleStateCreateInfo(
+    (VkSampleCountFlagBits)m_MSAA /*rasterSamples*/, VK_FALSE /*sampleShadingEnable*/, 1.0 /*minSampleShading*/, &sampleMask /*sampleMask*/, VK_FALSE, VK_FALSE);
+  //
+  // Fur gfx pipeline
+  //
+  m_pipelinefur = nvk.createGraphicsPipeline(NVK::GraphicsPipelineCreateInfo
+  (m_pipelineLayout, renderPass,/*subpass*/0,/*basePipelineHandle*/0,/*basePipelineIndex*/0,/*flags*/0)
+    (NVK::PipelineVertexInputStateCreateInfo(
+      NVK::VertexInputBindingDescription(0/*binding*/, sizeof(Vertex)/*stride*/, VK_VERTEX_INPUT_RATE_VERTEX),
+      NVK::VertexInputAttributeDescription(0/*location*/, 0/*binding*/, VK_FORMAT_R32G32B32_SFLOAT, 0) // pos
+      (1/*location*/, 0/*binding*/, VK_FORMAT_R32G32B32_SFLOAT, sizeof(vec3f)) // normal
+      (2/*location*/, 0/*binding*/, VK_FORMAT_R32G32B32A32_SFLOAT, 2 * sizeof(vec3f)) // color
+    ))
+    (NVK::PipelineInputAssemblyStateCreateInfo(VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST, VK_FALSE))
+    (NVK::PipelineShaderStageCreateInfo(
+      VK_SHADER_STAGE_VERTEX_BIT, nvk.createShaderModule(m_spv_GLSL_fur_vert.c_str(), m_spv_GLSL_fur_vert.size()), "main"))
+      (vkPipelineViewportStateCreateInfo)
+    (m_vkPipelineRasterStateCreateInfo)
+    (m_vkPipelineMultisampleStateCreateInfo)
+    (NVK::PipelineShaderStageCreateInfo(
+      VK_SHADER_STAGE_FRAGMENT_BIT, nvk.createShaderModule(m_spv_GLSL_fur_frag.c_str(), m_spv_GLSL_fur_frag.size()), "main"))
+      (m_vkPipelineColorBlendStateCreateInfo)
+    (m_vkPipelineDepthStencilStateCreateInfo)
+    (m_dynamicStateCreateInfo)
+  );
 }
 //------------------------------------------------------------------------------
 //
 //------------------------------------------------------------------------------
-bool    RendererVk::deleteRenderPassDependent()
+void RendererVk::updateMSAA(int MSAA)
 {
-  if(m_pipelinefur)
-    vkDestroyPipeline(nvk.m_device, m_pipelinefur, NULL);
-  m_pipelinefur = NULL;
-  return true;
+  // first, make sure we are done with any Queue
+  nvk.deviceWaitIdle();
+  for (int i = 0; i<2; i++) {
+    VkResult res = nvk.getFenceStatus(m_sceneFence[i]);
+    if (res != VK_NOT_READY) {
+      while (nvk.waitForFences(1, &m_sceneFence[i], VK_TRUE, 100000000) == false)
+      {
+        LOGW(">>>>>> TIMEOUT ON WAIT FENCE\n");
+        break;
+      }
+      nvk.resetFences(1, &m_sceneFence[i]);
+    }
+  }
+  m_MSAA = MSAA;
+  m_nvFBOBox.setMSAA(MSAA);
+  initRenderPassRelated();
+
 }
 //------------------------------------------------------------------------------
 //
@@ -637,47 +692,23 @@ void RendererVk::updateViewport(GLint x, GLint y, GLsizei width, GLsizei height,
 {
     if(m_bValid == false) return;
     int prevLineW = m_nvFBOBox.getSSFactor();
+    // first, make sure we are done with any Queue
+    nvk.deviceWaitIdle();
+    for (int i = 0; i<2; i++) {
+      VkResult res = nvk.getFenceStatus(m_sceneFence[i]);
+      if (res != VK_NOT_READY) {
+        while (nvk.waitForFences(1, &m_sceneFence[i], VK_TRUE, 100000000) == false)
+        {
+          LOGW(">>>>>> TIMEOUT ON WAIT FENCE\n");
+          break;
+        }
+        nvk.resetFences(1, &m_sceneFence[i]);
+      }
+    }
     // resize the intermediate super-sampled render-target
     m_nvFBOBox.resize(width, height, SSFactor);
 
-    deleteRenderPassDependent();
-
-    //initRenderPassDependent();
-
-    //--------------------------------------------------------------------------
-    // Init 'pipelines'
-    //
-    NVK::PipelineViewportStateCreateInfo vkPipelineViewportStateCreateInfo(
-      NVK::Viewport(0.0f, 0.0f, (float)width, (float)height, 0.0f, 1.0f),
-      NVK::Rect2DArray(0.0f, 0.0f, (float)width, (float)height)
-    );
-    //
-    // Get the renderpass on which the pipeline will be used
-    //
-    VkRenderPass    renderPass = m_nvFBOBox.getScenePass();
-    //
-    // Fur gfx pipeline
-    //
-    m_pipelinefur = nvk.createGraphicsPipeline(NVK::GraphicsPipelineCreateInfo
-    (m_pipelineLayout, renderPass,/*subpass*/0,/*basePipelineHandle*/0,/*basePipelineIndex*/0,/*flags*/0)
-      (NVK::PipelineVertexInputStateCreateInfo(
-        NVK::VertexInputBindingDescription(0/*binding*/, sizeof(Vertex)/*stride*/, VK_VERTEX_INPUT_RATE_VERTEX),
-        NVK::VertexInputAttributeDescription(0/*location*/, 0/*binding*/, VK_FORMAT_R32G32B32_SFLOAT, 0) // pos
-        (1/*location*/, 0/*binding*/, VK_FORMAT_R32G32B32_SFLOAT, sizeof(vec3f)) // normal
-        (2/*location*/, 0/*binding*/, VK_FORMAT_R32G32B32A32_SFLOAT, 2 * sizeof(vec3f)) // color
-      ))
-      (NVK::PipelineInputAssemblyStateCreateInfo(VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST, VK_FALSE))
-      (NVK::PipelineShaderStageCreateInfo(
-        VK_SHADER_STAGE_VERTEX_BIT, nvk.createShaderModule(m_spv_GLSL_fur_vert.c_str(), m_spv_GLSL_fur_vert.size()), "main"))
-        (vkPipelineViewportStateCreateInfo)
-      (m_vkPipelineRasterStateCreateInfo)
-      (m_vkPipelineMultisampleStateCreateInfo)
-      (NVK::PipelineShaderStageCreateInfo(
-        VK_SHADER_STAGE_FRAGMENT_BIT, nvk.createShaderModule(m_spv_GLSL_fur_frag.c_str(), m_spv_GLSL_fur_frag.size()), "main"))
-        (m_vkPipelineColorBlendStateCreateInfo)
-      (m_vkPipelineDepthStencilStateCreateInfo)
-      (m_dynamicStateCreateInfo)
-    );
+    initRenderPassRelated();
 }
 
 //------------------------------------------------------------------------------
@@ -694,12 +725,18 @@ bool RendererVk::terminateGraphics()
 {
     if(!m_bValid)
         return true;
-    m_cmdSceneIdx ^= 1;
-    while (nvk.waitForFences(1, &m_sceneFence[m_cmdSceneIdx], VK_TRUE, 100000000) == false)
-    {
-      LOGW(">>>>>> WAIT FENCE");
+    nvk.deviceWaitIdle();
+    for (int i = 0; i<2; i++) {
+      VkResult res = nvk.getFenceStatus(m_sceneFence[i]);
+      if (res != VK_NOT_READY) {
+        while (nvk.waitForFences(1, &m_sceneFence[i], VK_TRUE, 100000000) == false)
+        {
+          LOGW(">>>>>> TIMEOUT ON WAIT FENCE\n");
+          break;
+        }
+        nvk.resetFences(1, &m_sceneFence[i]);
+      }
     }
-    nvk.resetFences(1, &m_sceneFence[m_cmdSceneIdx]);
     // destroy the super-sampling pass system
     m_nvFBOBox.Finish();
     // destroys commandBuffers: but not really needed since m_cmdPool later gets destroyed
@@ -707,8 +744,9 @@ bool RendererVk::terminateGraphics()
     {
       nvk.destroyFence(m_sceneFence[i]);
       m_sceneFence[i] = NULL;
-      //if(m_cmdBufferQueue[i].size() > 0)
-      //  m_cmdPool.utFreeCommandBuffers(&m_cmdBufferQueue[i][0], m_cmdBufferQueue[i].size() - 1); // -1 bcause the last one comes from m_nvFBOBox and must be kept intact
+      if(m_cmdBufferQueue[i].size() > 0)
+        m_cmdPool.utFreeCommandBuffers(&m_cmdBufferQueue[i][0], m_cmdBufferQueue[i].size() - 1); // -1 bcause the last one comes from m_nvFBOBox and must be kept intact
+      m_cmdBufferQueue[i].clear();
     }
     m_cmdPool.destroyCommandPool(); // destroys commands that are inside, obviously
 
@@ -726,7 +764,9 @@ bool RendererVk::terminateGraphics()
     vkDestroyPipelineLayout(nvk.m_device, m_pipelineLayout, NULL);
     m_pipelineLayout = NULL;
 
-    deleteRenderPassDependent();
+    if (m_pipelinefur)
+      vkDestroyPipeline(nvk.m_device, m_pipelinefur, NULL);
+    m_pipelinefur = NULL;
 
     m_furBuffer.release();
     m_matrix.release();

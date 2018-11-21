@@ -120,6 +120,8 @@ public:
 
     virtual void display(const InertiaCamera& camera, const mat4f& projection);
 
+    virtual void updateMSAA(int MSAA);
+
     virtual void updateViewport(GLint x, GLint y, GLsizei width, GLsizei height, float SSFactor);
 
     virtual void setDownSamplingMode(int i) { downsamplingMode = (NVFBOBox::DownSamplingTechnique)i;}
@@ -209,6 +211,11 @@ void RendererStandard::display(const InertiaCamera& camera, const mat4f& project
     m_fboBox.Draw(downsamplingMode, 0,0, m_winSz[0], m_winSz[1], NULL);
 }
 
+void RendererStandard::updateMSAA(int MSAA)
+{
+  m_fboBox.resize(0, 0, -1, MSAA, -1);
+  m_fboBox.MakeResourcesResident();
+}
 //------------------------------------------------------------------------------
 // this is an example of creating a piece of token buffer that would be put
 // as a header before every single glDrawCommandsStatesAddressNV so that

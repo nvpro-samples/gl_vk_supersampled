@@ -424,8 +424,7 @@ int sample_main(int argc, const char** argv)
         if (myWindow.guiRegistry.checkValueChange(COMBO_MSAA))
         {
             g_profiler.reset(1);
-            g_pCurRenderer->terminateGraphics();
-            g_pCurRenderer->initGraphics(myWindow.getWidth(), myWindow.getHeight(), g_Supersampling, g_MSAA);
+            g_pCurRenderer->updateMSAA(g_MSAA);
         }
         if (myWindow.guiRegistry.checkValueChange(COMBO_SS))
         {

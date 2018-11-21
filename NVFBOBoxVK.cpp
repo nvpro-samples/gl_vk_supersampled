@@ -107,7 +107,8 @@ void NVFBOBoxVK::Finish()
     //
     // Free Vulkan resources
     //
-    deleteRT();
+    deleteRenderPass();
+    deleteFramebufferAndRelated();
     if(m_sampler)
         m_pnvk->destroySampler(m_sampler);
     m_sampler = NULL;
@@ -137,7 +138,7 @@ void NVFBOBoxVK::Finish()
 /*-------------------------------------------------------------------------
 
 -------------------------------------------------------------------------*/
-bool NVFBOBoxVK::deleteRenderPassDependent()
+bool NVFBOBoxVK::deleteRenderPass()
 {
   if (m_scenePass)
     vkDestroyRenderPass(m_pnvk->m_device, m_scenePass, NULL);
@@ -157,8 +158,10 @@ bool NVFBOBoxVK::deleteRenderPassDependent()
 /*-------------------------------------------------------------------------
 
 -------------------------------------------------------------------------*/
-bool NVFBOBoxVK::initRenderPassDependent()
+bool NVFBOBoxVK::initRenderPass()
 {
+  deleteRenderPass();
+
   bool multisample = depthSamples > 1;
   //
   // Create the render passes for the scene-render
@@ -287,9 +290,8 @@ bool NVFBOBoxVK::initRenderPassDependent()
 /*-------------------------------------------------------------------------
 
   -------------------------------------------------------------------------*/
-bool NVFBOBoxVK::deleteRT()
+bool NVFBOBoxVK::deleteFramebufferAndRelated()
 {
-    deleteRenderPassDependent();
     //
     //loop in tiles
     //
@@ -325,9 +327,9 @@ bool NVFBOBoxVK::deleteRT()
 /*-------------------------------------------------------------------------
 
   -------------------------------------------------------------------------*/
-bool NVFBOBoxVK::initRT()
+bool NVFBOBoxVK::initFramebufferAndRelated()
 {
-    deleteRT();
+    deleteFramebufferAndRelated();
     bool multisample = depthSamples > 1;
     bool csaa = false;
     bool ret = true;
@@ -336,7 +338,6 @@ bool NVFBOBoxVK::initRT()
     else
         m_tileData.resize(1);
 
-    initRenderPassDependent();
     //
     //loop in tiles
     //
@@ -455,6 +456,7 @@ bool NVFBOBoxVK::initRT()
 
     //
     // command buffer
+    // Warning: depends on the render-pass and frame-buffers
     //
     for(int i=0; i<3; i++)
     {
@@ -489,12 +491,8 @@ bool NVFBOBoxVK::initRT()
 /*-------------------------------------------------------------------------
 
   -------------------------------------------------------------------------*/
-bool NVFBOBoxVK::resize(int w, int h, float ssfact, int depthSamples_, int coverageSamples_)
+bool NVFBOBoxVK::resize(int w, int h, float ssfact)
 {
-    if(depthSamples_ >= 0)
-        depthSamples = depthSamples_;
-    if(coverageSamples_ >= 0)
-        coverageSamples = coverageSamples;
     if(ssfact >= 1.0)
         scaleFactor = ssfact;
     if(w > 0)
@@ -503,12 +501,28 @@ bool NVFBOBoxVK::resize(int w, int h, float ssfact, int depthSamples_, int cover
         height = h;
     bufw = (int)(scaleFactor*(float)width);
     bufh = (int)(scaleFactor*(float)height);
+    //
+    // resizing only require to reallocate resources :
+    //
+    return initFramebufferAndRelated();
+}
+/*-------------------------------------------------------------------------
 
-    bool multisample = depthSamples > 1;
-    bool csaa = false;
-    bool ret = true;
-
-    return initRT();
+-------------------------------------------------------------------------*/
+bool NVFBOBoxVK::setMSAA(int depthSamples_, int coverageSamples_)
+{
+  bool bRes = true;
+  if (depthSamples_ >= 0)
+    depthSamples = depthSamples_;
+  if (coverageSamples_ >= 0)
+    coverageSamples = coverageSamples;
+  //
+  // New MSAA requires to re-create the render-passes
+  // New renderpasses requires re-creating render-targets
+  //
+  if (!initRenderPass() )               return false;
+  if (!initFramebufferAndRelated() )    return false;
+  return true;
 }
 /*-------------------------------------------------------------------------
 
@@ -650,7 +664,6 @@ bool NVFBOBoxVK::Initialize(NVK &nvk, int w, int h, float ssfact, int depthSampl
     }
 
 
-    initRenderPassDependent();
     //
     // Descriptor Pool: size is 3 to have enough for global; object and ...
     // TODO: try other VkDescriptorType
@@ -686,7 +699,8 @@ bool NVFBOBoxVK::Initialize(NVK &nvk, int w, int h, float ssfact, int depthSampl
     //
     // FBO and related resources
     //
-    initRT();
+    initRenderPass();
+    initFramebufferAndRelated();
 
     bValid = true;
     return true;
@@ -709,7 +723,6 @@ VkCommandBuffer NVFBOBoxVK::Draw(DownSamplingTechnique technique, int tilex, int
     if((scaleFactor > 1.0) || (tilesw > 1) || (tilesh > 1))
     {
       return m_cmdDownsample[technique].m_cmdbuffer;
-      //m_pnvk->queueSubmit(NVK::SubmitInfo(0, NULL, NULL, 1, m_cmdDownsample[technique], 0, NULL),  NULL);
     }
     return VK_NULL_HANDLE;
 }

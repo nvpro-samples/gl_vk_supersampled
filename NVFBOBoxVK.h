@@ -69,7 +69,8 @@ public:
     ~NVFBOBoxVK();
 
     virtual bool Initialize(NVK &nvk, int w, int h, float ssfact, int depthSamples, int coverageSamples=-1, int tilesW=1, int tilesH=1, bool bOneFBOPerTile=true);
-    virtual bool resize(int w, int h, float ssfact=-1, int depthSamples_=-1, int coverageSamples_=-1);
+    virtual bool setMSAA(int depthSamples_ = -1, int coverageSamples_ = -1);
+    virtual bool resize(int w, int h, float ssfact=-1);
     virtual void Finish();
 
     virtual int getWidth() { return width; }
@@ -141,8 +142,8 @@ protected:
     int      pngDataSz;      // size of allocated memory
     unsigned char *pngData;      // temporary data for the full image (many tiles)
     unsigned char *pngDataTile; // temporary data from a tile
-    bool    initRT();
-    bool    initRenderPassDependent();
-    bool    deleteRT();
-    bool    deleteRenderPassDependent();
+    bool    initFramebufferAndRelated();
+    bool    initRenderPass();
+    bool    deleteFramebufferAndRelated();
+    bool    deleteRenderPass();
 };

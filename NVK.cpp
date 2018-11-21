@@ -1534,7 +1534,13 @@ void NVK::resetFences(uint32_t fenceCount, const VkFence* pFences)
 {
     CHECK(vkResetFences(m_device, fenceCount, pFences) );
 }
-
+//------------------------------------------------------------------------------
+//
+//------------------------------------------------------------------------------
+VkResult NVK::getFenceStatus(VkFence fence)
+{
+  return vkGetFenceStatus(m_device, fence);
+}
 //------------------------------------------------------------------------------
 //
 //------------------------------------------------------------------------------

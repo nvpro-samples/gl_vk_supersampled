@@ -11,5 +11,6 @@ The source code contains two implementations:
 
 This sample shows also a way to write Vulkan code in a rather more compact fashion: by using constructors and functors. Details of this part are in NVK.cpp.
 
+![Example](https://github.com/nvpro-samples/gl_vk_supersampled/blob/master/doc/sample.jpg)
 
 

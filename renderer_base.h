@@ -28,16 +28,16 @@
 #define MAXCMDBUFFERS 100
 
 #include <assert.h>
-#include "main.h"
+#include "nvpwindow.hpp"
 
-#include "nv_math/nv_math.h"
-#include "nv_math/nv_math_glsltypes.h"
-using namespace nv_math;
+#include "nvmath/nvmath.h"
+#include "nvmath/nvmath_glsltypes.h"
+using namespace nvmath;
 
 #include "GLSLShader.h"
-#include "nv_helpers_gl/profilertimers_gl.hpp"
+#include "nvh/profiler.hpp"
 
-#include "nv_helpers/appwindowcamerainertia.hpp"
+#include "nvh/appwindowcamerainertia.hpp"
 
 #ifdef USESVCUI
 #include "svcmfcui.h"
@@ -50,14 +50,6 @@ using namespace nv_math;
 #   include "zlib.h"
 #endif
 
-#if 1//def SUPPORT_PROFILE
-#define PROFILE_SECTION(name)           nv_helpers::Profiler::Section _tempTimer(g_profiler, name, NULL)
-#define PROFILE_SECTION_CMD(name, cmd)  nv_helpers::Profiler::Section _tempTimer(g_profiler, name, NULL, false, (cmd))
-#define PROFILE_SPLIT()                 g_profiler.accumulationSplit()
-#else
-#define PROFILE_SECTION(name)
-#define PROFILE_SPLIT()
-#endif
 
 //
 // For the case where we work with Descriptor Sets (Vulkan)
@@ -95,7 +87,7 @@ NV_ALIGN(256, struct MatrixBufferGlobal
 //
 // Externs
 //
-extern nv_helpers::Profiler  g_profiler;
+extern nvh::Profiler  g_profiler;
 
 extern bool         g_bUseCallCommandListNV;
 extern bool         g_bUseBindless;
@@ -133,10 +125,6 @@ public:
     virtual bool bFlipViewport() { return false; }
 
     virtual void setDownSamplingMode(int i) = 0;
-    //
-    // Timer methods
-    //
-    virtual nv_helpers::Profiler::GPUInterface* getTimerInterface() { return NULL; };
 };
 extern Renderer*    g_renderers[10];
 extern int            g_numRenderers;

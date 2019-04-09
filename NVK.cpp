@@ -49,9 +49,8 @@
 // VULKAN: NVK.h > fnptrinline.h > vulkannv.h > vulkan.h
 //------------------------------------------------------------------------------
 #include "NVK.h"
-#define DECL_WININTERNAL // need WINinternal
-#include "main.h" // // for LOGI/E... and needed for WINinternal
-#include "wininternal_win32_vk.hpp" // needed for WINinternalVK: access Vulkan fields
+#include <nvvk/contextwindow_vk.hpp>
+#include "nvpwindow_internal.hpp"
 
 template <typename T, size_t sz> inline size_t getArraySize(T(&t)[sz]) { return sz; }
 
@@ -504,7 +503,7 @@ VkCommandBuffer NVK::CommandPool::allocateCommandBuffers(bool primary, uint32_t 
     allocInfo.level = primary ? VK_COMMAND_BUFFER_LEVEL_PRIMARY : VK_COMMAND_BUFFER_LEVEL_SECONDARY;
     allocInfo.commandBufferCount = nCmdBuffers;
     CHECK(vkAllocateCommandBuffers(m_device, &allocInfo, cmdBuffers) );
-    for(int i=0; i<nCmdBuffers; i++) // for later
+    for(uint32_t i=0; i<nCmdBuffers; i++) // for later
     {
         m_allocatedCmdBuffers[p].insert(cmdBuffers[i]);
     }
@@ -917,42 +916,40 @@ VkBool32 dbgFunc(
 //------------------------------------------------------------------------------
 //
 //------------------------------------------------------------------------------
-bool NVK::utInitialize(WINinternal *pwinInternal)
+bool NVK::utInitialize(nvvk::ContextWindowVK *pwinInternalVK)
 {
     m_swapChain = NULL;
-    if(pwinInternal)
+    if(pwinInternalVK)
     {
         m_deviceExternal = true;
         // No need to initialize anything: done by the framework
         // update nvk with existing device from WINinternalVK
-        WINinternalVK* pwinInternalVK = static_cast<WINinternalVK*>(pwinInternal);
         // keep track of the swapchain
-        nv_helpers_vk::BasicWindow &bw = pwinInternalVK->m_basicWindow;
-        m_swapChain = &bw.m_swapChain;
+        m_swapChain = &pwinInternalVK->m_swapChain;
 
-        m_device = bw.m_context.m_device;
-        m_instance = bw.m_context.m_instance;
-        m_CreateDebugReportCallback = NULL;//bw.m_CreateDebugReportCallback;
-        m_DestroyDebugReportCallback = NULL;//bw.m_DestroyDebugReportCallback;
-        m_msg_callback = NULL;//bw.m_msg_callback;
-        m_DebugReportMessage = NULL;//bw.m_DebugReportMessage;
-        m_gpu.device = bw.m_context.m_physicalDevice;
-        m_gpu.memoryProperties = bw.m_context.m_physicalInfo.memoryProperties;
-        m_gpu.properties = bw.m_context.m_physicalInfo.properties;
-        m_gpu.features2 = bw.m_context.m_physicalInfo.features2;
-        m_gpu.queueProperties = bw.m_context.m_physicalInfo.queueProperties;
-        //m_gpu.graphics_queue_family_index = bw.m_gpu.graphics_queue_family_index;
-        m_queue = bw.m_presentQueue;
-        //m_surface = bw.m_surface;
-        //m_surfFormat = bw.m_surfFormat;
-        //m_swap_chain = bw.m_swap_chain;
-        //m_swapchainImageCount = bw.m_swapchainImageCount;
-        //m_swapchaineBuffers = bw.m_swapchaineBuffers;
-       // pfnDebugMarkerSetObjectTagEXT = bw.pfnDebugMarkerSetObjectTagEXT;
-       // pfnDebugMarkerSetObjectNameEXT = bw.pfnDebugMarkerSetObjectNameEXT;
-       // pfnCmdDebugMarkerBeginEXT = bw.pfnCmdDebugMarkerBeginEXT;
-       // pfnCmdDebugMarkerEndEXT = bw.pfnCmdDebugMarkerEndEXT;
-        //pfnCmdDebugMarkerInsertEXT = bw.pfnCmdDebugMarkerInsertEXT;
+        m_device = pwinInternalVK->m_context.m_device;
+        m_instance = pwinInternalVK->m_context.m_instance;
+        m_CreateDebugReportCallback = NULL;//pwinInternalVK->m_CreateDebugReportCallback;
+        m_DestroyDebugReportCallback = NULL;//pwinInternalVK->m_DestroyDebugReportCallback;
+        m_msg_callback = NULL;//pwinInternalVK->m_msg_callback;
+        m_DebugReportMessage = NULL;//pwinInternalVK->m_DebugReportMessage;
+        m_gpu.device = pwinInternalVK->m_context.m_physicalDevice;
+        m_gpu.memoryProperties = pwinInternalVK->m_context.m_physicalInfo.memoryProperties;
+        m_gpu.properties = pwinInternalVK->m_context.m_physicalInfo.properties;
+        m_gpu.features2 = pwinInternalVK->m_context.m_physicalInfo.features2;
+        m_gpu.queueProperties = pwinInternalVK->m_context.m_physicalInfo.queueProperties;
+        //m_gpu.graphics_queue_family_index = pwinInternalVK->m_gpu.graphics_queue_family_index;
+        m_queue = pwinInternalVK->m_presentQueue;
+        //m_surface = pwinInternalVK->m_surface;
+        //m_surfFormat = pwinInternalVK->m_surfFormat;
+        //m_swap_chain = pwinInternalVK->m_swap_chain;
+        //m_swapchainImageCount = pwinInternalVK->m_swapchainImageCount;
+        //m_swapchaineBuffers = pwinInternalVK->m_swapchaineBuffers;
+       // pfnDebugMarkerSetObjectTagEXT = pwinInternalVK->pfnDebugMarkerSetObjectTagEXT;
+       // pfnDebugMarkerSetObjectNameEXT = pwinInternalVK->pfnDebugMarkerSetObjectNameEXT;
+       // pfnCmdDebugMarkerBeginEXT = pwinInternalVK->pfnCmdDebugMarkerBeginEXT;
+       // pfnCmdDebugMarkerEndEXT = pwinInternalVK->pfnCmdDebugMarkerEndEXT;
+        //pfnCmdDebugMarkerInsertEXT = pwinInternalVK->pfnCmdDebugMarkerInsertEXT;
         return true;
     }
     m_deviceExternal = false;
@@ -1008,7 +1005,7 @@ bool NVK::utInitialize(WINinternal *pwinInternal)
       "VK_LAYER_LUNARG_api_dump",
     };
     static int instance_validation_layers_sz = 
-#ifdef _DEBUG
+#if 0//def _DEBUG
       getArraySize(instance_validation_layers);
 #else
       0;

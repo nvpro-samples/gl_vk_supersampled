@@ -40,9 +40,9 @@
 #include <string.h>
 #include <vector>
 
-#include "nv_helpers/nvprint.hpp"
-#include "nv_math/nv_math.h"
-using namespace nv_math;
+#include "nvh/nvprint.hpp"
+#include "nvmath/nvmath.h"
+using namespace nvmath;
 
 // declared in renderer_vulkan.cpp
 namespace vk {

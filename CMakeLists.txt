@@ -4,8 +4,6 @@ Project(${PROJNAME})
 Message(STATUS "-------------------------------")
 Message(STATUS "Processing Project ${PROJNAME}:")
 
-SET(MODELS_DOWNLOAD_FORCE OFF CACHE BOOL "Forces the download operation of 3D models needed for this demo" )
-SET(MODELS_DOWNLOAD_DISABLED ON CACHE BOOL "UNCHECK IT to download heavy 3D models needed for this demo" )
 #####################################################################################
 # look for shared_sources 1) as a sub-folder 2) at some other locations
 # this cannot be put anywhere else since we still didn't find CMakeLists_include.txt yet
@@ -71,29 +69,29 @@ source_group(GLSL_Files FILES ${GLSL_SOURCES})
 # additional files from helpers
 #
 #LIST(APPEND COMMON_SOURCE_FILES 
-#  ${BASE_DIRECTORY}/shared_sources/nv_helpers_gl/WindowInertiaCamera.h
-#  ${BASE_DIRECTORY}/shared_sources/nv_helpers/TimeSampler.h
-#  ${BASE_DIRECTORY}/shared_sources/nv_helpers/InertiaCamera.h
-#  ${BASE_DIRECTORY}/shared_sources/nv_math/nv_math.inl
-#  ${BASE_DIRECTORY}/shared_sources/nv_math/nv_math.h
-#  ${BASE_DIRECTORY}/shared_sources/nv_math/nv_math_types.h
-#  ${BASE_DIRECTORY}/shared_sources/nv_helpers/profiler.hpp
-#  ${BASE_DIRECTORY}/shared_sources/nv_helpers/profiler.cpp
+#  ${BASE_DIRECTORY}/shared_sources/nvgl/WindowInertiaCamera.h
+#  ${BASE_DIRECTORY}/shared_sources/nvh/TimeSampler.h
+#  ${BASE_DIRECTORY}/shared_sources/nvh/InertiaCamera.h
+#  ${BASE_DIRECTORY}/shared_sources/nvmath/nvmath.inl
+#  ${BASE_DIRECTORY}/shared_sources/nvmath/nvmath.h
+#  ${BASE_DIRECTORY}/shared_sources/nvmath/nvmath_types.h
+#  ${BASE_DIRECTORY}/shared_sources/nvh/profiler.hpp
+#  ${BASE_DIRECTORY}/shared_sources/nvh/profiler.cpp
 #)
 #####################################################################################
 # Executable
 #
+
 if(WIN32 AND NOT GLUT_FOUND)
   add_definitions(/wd4267) #remove size_t to int warning
   add_definitions(/wd4996) #remove printf warning
   add_definitions(/wd4244) #remove double to float conversion warning
   add_definitions(/wd4305) #remove double to float truncation warning
-  add_executable(${PROJNAME} WIN32 ${SOURCE_FILES} ${COMMON_SOURCE_FILES} ${PACKAGE_SOURCE_FILES} ${GLSL_SOURCES})
 else()
   # allow gcc to be tolerant on some issues. TODO:should remove this option
   add_definitions(-fpermissive)
-  add_executable(${PROJNAME} ${SOURCE_FILES} ${COMMON_SOURCE_FILES} ${PACKAGE_SOURCE_FILES} ${GLSL_SOURCES})
 endif()
+add_executable(${PROJNAME} ${SOURCE_FILES} ${COMMON_SOURCE_FILES} ${PACKAGE_SOURCE_FILES} ${GLSL_SOURCES})
 
 #####################################################################################
 # common source code needed for this sample

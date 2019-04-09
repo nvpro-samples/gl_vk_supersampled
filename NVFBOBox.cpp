@@ -26,7 +26,7 @@
 //
 //--------------------------------------------------------------------------------------
 
-#include "main.h"
+#include "nvpwindow.hpp"
 
 #if defined(_MSC_VER)
 #  include <windows.h>
@@ -47,7 +47,7 @@
 #endif
 
 #include "NVFBOBox.h"
-#include <nv_helpers_gl/extensions_gl.hpp>
+#include <nvgl/extensions_gl.hpp>
 
 //#include "Logging.h"
 //#include "glError.h"
@@ -130,7 +130,6 @@ bool NVFBOBox::initRT()
 	bool multisample = depthSamples > 1;
 	bool csaa = (coverageSamples > depthSamples) && (has_GL_NV_texture_multisample);
 	bool ret = true;
-	int query;
 	if(bOneFBOPerTile)
 		tileData.resize(tilesw*tilesh);
 	else

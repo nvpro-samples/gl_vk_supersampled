@@ -450,7 +450,7 @@ namespace vk
         break;
       }
       nvk.resetFences(1, &m_sceneFence[m_cmdSceneIdx]);
-      m_cmdPool.utFreeCommandBuffers(&cmdBufferQueue2[0], cmdBufferQueue2.size() - 1); // -1 bcause the last one comes from m_nvFBOBox and must be kept intact
+      m_cmdPool.utFreeCommandBuffers(&cmdBufferQueue2[0], cmdBufferQueue2.size() - (cmdDownSample ? 1 : 0));  // -1 bcause the last one comes from m_nvFBOBox and must be kept intact
       cmdBufferQueue2.clear();
     }
 

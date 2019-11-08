@@ -37,7 +37,7 @@
 #include <float.h>
 #include <math.h>
 
-#include <string.h>
+#include <string>
 #include <vector>
 
 #include "nvh/nvprint.hpp"

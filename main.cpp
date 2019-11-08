@@ -41,23 +41,23 @@ private:
   int                 dummy[5];
 public:
   ImGuiH::Registry    m_guiRegistry;
-  nvgl::ContextWindowGL     m_contextWindowGL;
+  nvgl::ContextWindow     m_contextWindowGL;
 
   MyWindow();
 
-  bool create(int posX, int posY, int width, int height, const char* title, const nvgl::ContextFlagsGL &context);
+  bool open(int posX, int posY, int width, int height, const char* title, const nvgl::ContextWindowCreateInfo &context);
   void processUI(int width, int height, double time);
 
-  virtual void shutdown() override;
-  virtual void reshape(int w = 0, int h = 0) override;
+  virtual void onWindowClose() override;
+  virtual void onWindowResize(int w = 0, int h = 0) override;
   //virtual void motion(int x, int y) override;
   //virtual void mousewheel(short delta) override;
   //virtual void mouse(NVPWindow::MouseButton button, ButtonAction action, int mods, int x, int y) override;
   //virtual void menu(int m) override;
-  virtual void keyboard(MyWindow::KeyCode key, ButtonAction action, int mods, int x, int y) override;
-  virtual void keyboardchar(unsigned char key, int mods, int x, int y) override;
+  virtual void onKeyboard(MyWindow::KeyCode key, ButtonAction action, int mods, int x, int y) override;
+  virtual void onKeyboardChar(unsigned char key, int mods, int x, int y) override;
   //virtual void idle() override;
-  virtual void display() override;
+  virtual void onWindowRefresh() override;
 };
 
 MyWindow::MyWindow() :
@@ -153,9 +153,12 @@ void MyWindow::processUI(int width, int height, double dt)
       ImGui::EndChild();
     }
     const int avg = 10;
-    int avgf = g_profiler.getAveragedFrames();
+    int avgf = g_profiler.getTotalFrames();
     if (avgf % avg == avg - 1) {
-      g_profiler.getAveragedValues("frame", g_statsCpuTime, g_statsGpuTime);
+      nvh::Profiler::TimerInfo info;
+      g_profiler.getTimerInfo("frame", info);
+      g_statsCpuTime = info.cpu.average;
+      g_statsGpuTime = info.gpu.average;
     }
 
     float gpuTimeF = float(g_statsGpuTime);
@@ -175,11 +178,11 @@ void MyWindow::processUI(int width, int height, double dt)
 //------------------------------------------------------------------------------
 //
 //------------------------------------------------------------------------------
-bool MyWindow::create(int posX, int posY, int width, int height, const char* title, const nvgl::ContextFlagsGL &context)
+bool MyWindow::open(int posX, int posY, int width, int height, const char* title, const nvgl::ContextWindowCreateInfo &context)
 {
-  if (!AppWindowCameraInertia::create(posX, posY, width, height, title))
+  if (!AppWindowCameraInertia::open(posX, posY, width, height, title))
     return false;
-  m_contextWindowGL.init(&context, this);
+  m_contextWindowGL.init(&context, m_internal, title);
   ImGui::InitGL();
 
   //
@@ -207,22 +210,22 @@ bool MyWindow::create(int posX, int posY, int width, int height, const char* tit
 //------------------------------------------------------------------------------
 //
 //------------------------------------------------------------------------------
-void MyWindow::shutdown()
+void MyWindow::onWindowClose()
 {
   g_pCurRenderer->terminateGraphics();
   ImGui::ShutdownGL();
-  AppWindowCameraInertia::shutdown();
+  AppWindowCameraInertia::onWindowClose();
   m_contextWindowGL.deinit();
 }
 
 //------------------------------------------------------------------------------
 //
 //------------------------------------------------------------------------------
-void MyWindow::reshape(int w, int h)
+void MyWindow::onWindowResize(int w, int h)
 {
-  if (w == 0) w = m_windowSize[0];
-  if (h == 0) h = m_windowSize[1];
-  AppWindowCameraInertia::reshape(w, h);
+  if (w == 0) w = getWidth();
+  if (h == 0) h = getHeight();
+  AppWindowCameraInertia::onWindowResize(w, h);
   if (g_pCurRenderer)
   {
     if (g_pCurRenderer->bFlipViewport())
@@ -240,9 +243,9 @@ void MyWindow::reshape(int w, int h)
 //
 //------------------------------------------------------------------------------
 #define KEYTAU 0.10f
-void MyWindow::keyboard(NVPWindow::KeyCode key, MyWindow::ButtonAction action, int mods, int x, int y)
+void MyWindow::onKeyboard(NVPWindow::KeyCode key, MyWindow::ButtonAction action, int mods, int x, int y)
 {
-  AppWindowCameraInertia::keyboard(key, action, mods, x, y);
+  AppWindowCameraInertia::onKeyboard(key, action, mods, x, y);
 
   if (action == MyWindow::BUTTON_RELEASE)
     return;
@@ -259,9 +262,9 @@ void MyWindow::keyboard(NVPWindow::KeyCode key, MyWindow::ButtonAction action, i
 //------------------------------------------------------------------------------
 //
 //------------------------------------------------------------------------------
-void MyWindow::keyboardchar(unsigned char key, int mods, int x, int y)
+void MyWindow::onKeyboardChar(unsigned char key, int mods, int x, int y)
 {
-  AppWindowCameraInertia::keyboardchar(key, mods, x, y);
+  AppWindowCameraInertia::onKeyboardChar(key, mods, x, y);
   switch (key)
   {
   case '1':
@@ -294,13 +297,13 @@ int refreshCmdBuffers()
 //------------------------------------------------------------------------------
 //
 //------------------------------------------------------------------------------
-void MyWindow::display()
+void MyWindow::onWindowRefresh()
 {
   if (!g_pCurRenderer) {
     return;
   }
 
-  AppWindowCameraInertia::display();
+  AppWindowCameraInertia::onWindowRefresh();
 
   if (!g_pCurRenderer->valid())
   {
@@ -309,7 +312,7 @@ void MyWindow::display()
     m_contextWindowGL.swapBuffers();
     return;
   }
-  float dt = (float)m_realtime.getTiming();
+  float dt = (float)m_realtime.getFrameDT();
 
   int width = getWidth();
   int height = getHeight();
@@ -338,14 +341,14 @@ void MyWindow::display()
 //------------------------------------------------------------------------------
 int main(int argc, char **argv)
 {
-  NVPWindow::System system(argv[0], PROJECT_NAME);
+  NVPSystem system(argv[0], PROJECT_NAME);
 
   // you can create more than only one
   static MyWindow myWindow;
   // -------------------------------
   // Basic OpenGL settings
   //
-  nvgl::ContextFlagsGL context(
+  nvgl::ContextWindowCreateInfo context(
     4,      //major;
     3,      //minor;
     false,   //core;
@@ -361,7 +364,7 @@ int main(int argc, char **argv)
   // -------------------------------
   // Create the window
   //
-  if (!myWindow.create(0, 0, 1280, 720, "gl_vk_supersampled", context))
+  if (!myWindow.open(0, 0, 1280, 720, "gl_vk_supersampled", context))
   {
     LOGE("Failed to initialize the sample\n");
     return false;
@@ -400,25 +403,23 @@ int main(int argc, char **argv)
   Renderer* renderer = g_renderers[g_curRenderer];
   renderer->initGraphics(myWindow.getWidth(), myWindow.getHeight(), g_Supersampling, g_MSAA);
   renderer->setDownSamplingMode(g_downSamplingMode);
-  
 
   // -------------------------------
   // Message pump loop
   //
-  myWindow.m_contextWindowGL.makeContextCurrent();
-  myWindow.m_contextWindowGL.swapInterval(0);
-  myWindow.reshape();
-
   // set last, otherwise display function is triggered whilst not all state has been initialized
   g_pCurRenderer = renderer;
+  myWindow.m_contextWindowGL.makeContextCurrent();
+  myWindow.m_contextWindowGL.swapInterval(0);
+  myWindow.onWindowResize();
 
-  while (MyWindow::sysPollEvents(false))
+  while (myWindow.pollEvents())
   {
     myWindow.idle();
     if (myWindow.m_renderCnt > 0)
     {
       myWindow.m_renderCnt--;
-      myWindow.display();
+      myWindow.onWindowRefresh();
     }
     if (myWindow.m_guiRegistry.checkValueChange(COMBO_MSAA))
     {
@@ -442,7 +443,7 @@ int main(int argc, char **argv)
       g_pCurRenderer->initGraphics(myWindow.getWidth(), myWindow.getHeight(), g_Supersampling, g_MSAA);
       g_profiler.reset(1);
       g_pCurRenderer->setDownSamplingMode(g_downSamplingMode);
-      myWindow.reshape(myWindow.getWidth(), myWindow.getHeight());
+      myWindow.onWindowResize(myWindow.getWidth(), myWindow.getHeight());
     }
   }
   return 0;

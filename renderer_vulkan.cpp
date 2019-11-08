@@ -159,7 +159,7 @@ namespace vk
     std::vector<std::string> paths;
     paths.push_back(name);
     paths.push_back(std::string("GLSL/") + name);
-    paths.push_back(std::string(NVPWindow::sysExePath() + "/" + PROJECT_RELDIRECTORY + "GLSL/") + name);
+    paths.push_back(std::string(NVPSystem::exePath() + "/" + PROJECT_RELDIRECTORY + "GLSL/") + name);
     paths.push_back(std::string("../GLSL/") + name); // for when working directory in Debug is $(ProjectDir)
     paths.push_back(std::string("../../" PROJECT_NAME "/GLSL/") + name); // for when using $(TargetDir)
     paths.push_back(std::string("../../shipped/" PROJECT_NAME "/GLSL/") + name); // for when using $(TargetDir)
@@ -223,7 +223,7 @@ namespace vk
 
     //--------------------------------------------------------------------------
     m_profilerVK = nvvk::ProfilerVK(&g_profiler);
-    m_profilerVK.init(nvk.m_device, nvk.m_gpu.device, nullptr);
+    m_profilerVK.init(nvk.m_device, nvk.m_gpu.device);
 
     //
     // what is needed to tell which states are dynamic

@@ -76,6 +76,9 @@
 #include <string>
 #include <vulkan/vulkan.h>
 
+#include <nvvk/swapchain_vk.hpp>
+#include <nvvk/context_vk.hpp>
+#include "window_surface_vk.hpp"
 //------------------------------------------------------------------------------
 // Forward declarations
 //------------------------------------------------------------------------------
@@ -286,7 +289,7 @@ public:
     //
     // Initialization utilities
     //
-    bool utInitialize(nvvk::ContextWindowVK *pwinInternal = NULL);
+    bool utInitialize(WindowSurface* pWindowSurface = NULL);
     bool utDestroy();
     //
     // ut... : methods that don't really correspond to VK API

@@ -153,7 +153,7 @@ namespace vk
   //------------------------------------------------------------------------------
   //
   //------------------------------------------------------------------------------
-  bool load_binary(std::string &name, std::string &data)
+  bool load_binary(const std::string &name, std::string &data)
   {
     FILE *fd = NULL;
     std::vector<std::string> paths;

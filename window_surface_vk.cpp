@@ -43,9 +43,8 @@
 #define GLFW_EXPOSE_NATIVE_WIN32
 #include <GLFW/glfw3native.h>
 #include <vulkan/vulkan_win32.h>
-#else
-#define VK_USE_PLATFORM_XCB_KHR
 #endif
+
 #include <nvvk/structs_vk.hpp>
 
 bool WindowSurface::init(nvvk::Context* pContext, NVPWindow* pWin, int MSAA)
@@ -92,12 +91,7 @@ bool WindowSurface::init(nvvk::Context* pContext, NVPWindow* pWin, int MSAA)
   createInfo.hwnd = glfwGetWin32Window(pWin->m_internal);
   result = vkCreateWin32SurfaceKHR(pContext->m_instance, &createInfo, nullptr, &m_surface);
 #else  // _WIN32
-  VkXcbSurfaceCreateInfoKHR createInfo = {};
-  createInfo.sType = VK_STRUCTURE_TYPE_XCB_SURFACE_CREATE_INFO_KHR;
-  createInfo.pNext = NULL;
-  createInfo.connection = info.connection;
-  createInfo.window = info.window;
-  result = vkCreateXcbSurfaceKHR(pContext->m_instance, &createInfo, nullptr, &m_surface);
+  result = glfwCreateWindowSurface(pContext->m_instance, pWin->m_internal, NULL, &m_surface);
 #endif // _WIN32
   assert(result == VK_SUCCESS);
 

@@ -46,7 +46,7 @@ using namespace nvmath;
 
 // declared in renderer_vulkan.cpp
 namespace vk {
-  extern bool load_binary(std::string &name, std::string &data);
+  extern bool load_binary(const std::string &name, std::string &data);
 }
 
 std::string fsArray[3];

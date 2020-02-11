@@ -314,7 +314,7 @@ public:
     VkResult              bindBufferMemory(VkBuffer &buffer, VkDeviceMemory mem, VkDeviceSize offset);
     VkShaderModule        createShaderModule( const char *shaderCode, size_t size);
     VkBufferView          createBufferView( VkBuffer buffer, VkFormat format, VkDeviceSize size );
-    VkFramebuffer         createFramebuffer(FramebufferCreateInfo &fbinfo);
+    VkFramebuffer         createFramebuffer(const FramebufferCreateInfo &fbinfo);
     VkResult              createCommandPool(const VkCommandPoolCreateInfo* pCreateInfo, const VkAllocationCallbacks* pAllocator, CommandPool *commandPool);
     void                  freeMemory(VkDeviceMemory mem);
     void*                 mapMemory(VkDeviceMemory mem, VkDeviceSize offset, VkDeviceSize size, VkMemoryMapFlags flags);
@@ -491,7 +491,7 @@ public:
         {
             operator()(bufferOffset, bufferRowLength, bufferImageHeight, imageSubresource, imageOffset, imageExtent, miplevel, layer);
         }
-        inline BufferImageCopy &operator=(const BufferImageCopy &src) { s = src.s; }
+        inline BufferImageCopy &operator=(const BufferImageCopy &src) { s = src.s; return *this; }
         inline size_t size() { return s.size(); }
         inline VkBufferImageCopy* getItem(int i=0) { return &(s[i]); }
         inline const VkBufferImageCopy* getItemCst(int i=0) const { return &(s[i]); }
@@ -1113,6 +1113,7 @@ public:
           s.pViewports = t.getItem(0);
           s.scissorCount = u.size();
           s.pScissors = u.getItem(0);
+          return *this;
         }
         PipelineViewportStateCreateInfo() : t(0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f), u(0.0f, 0.0f, 0.0f, 0.0f)
         {
@@ -1689,6 +1690,7 @@ public:
             ss.offset    = offset;
             ss.size      = size;
             s.push_back(ss);
+            return *this;
         };
         BufferMemoryBarrier(VkAccessFlags srcAccessMask, VkAccessFlags dstAccessMask, 
             uint32_t                                    srcQueueFamilyIndex,
@@ -1767,8 +1769,8 @@ public:
     class RenderPassBeginInfo
     {
     public:
-        RenderPassBeginInfo(VkRenderPass &renderPass, VkFramebuffer &framebuffer, 
-                               VkRect2D &renderArea, ClearValue &clearValues ) :
+        RenderPassBeginInfo(VkRenderPass renderPass, VkFramebuffer framebuffer,
+                            const VkRect2D &renderArea, const ClearValue &clearValues ) :
             t(clearValues)
         {
             s.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
@@ -1783,7 +1785,7 @@ public:
         inline const VkRenderPassBeginInfo* getItemCst() const { return &s; }
         operator VkRenderPassBeginInfo* () { return &s; }
         operator const VkRenderPassBeginInfo* () const { return &s; }
-        RenderPassBeginInfo& operator=(const RenderPassBeginInfo& src) { assert(!"TODO!"); }
+        RenderPassBeginInfo& operator=(const RenderPassBeginInfo& src) { assert(!"TODO!"); return *this;}
     private:
         VkRenderPassBeginInfo s;
         ClearValue t;
@@ -2172,6 +2174,7 @@ public:
             ss.dstAccessMask = dstAccessMask;
             ss.dependencyFlags = dependencyFlags;
             s.push_back(ss);
+            return *this;
         }
         SubpassDependency() {} // allows to reference None of it
         SubpassDependency(SubpassDependency &a) { s = a.s; } // allows to reference None of it

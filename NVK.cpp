@@ -1117,7 +1117,7 @@ bool NVK::utInitialize(WindowSurface* pWindowSurface)
                 m_gpu.memoryProperties.memoryHeaps[i].flags&VK_MEMORY_HEAP_DEVICE_LOCAL_BIT?"VK_MEMORY_HEAP_DEVICE_LOCAL_BIT":""
             );
         }
-    m_gpu.memoryProperties.memoryHeaps[VK_MAX_MEMORY_HEAPS];
+
         vkGetPhysicalDeviceFeatures2(physical_devices[j], &m_gpu.features2); // too many stuff to display
         vkGetPhysicalDeviceQueueFamilyProperties(physical_devices[j], &count, NULL);
         m_gpu.queueProperties.resize(count);

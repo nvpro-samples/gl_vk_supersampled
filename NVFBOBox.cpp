@@ -185,7 +185,7 @@ bool NVFBOBox::resize(int w, int h, float ssfact, int depthSamples_, int coverag
 	if(depthSamples_ >= 0)
 		depthSamples = depthSamples_;
 	if(coverageSamples_ >= 0)
-		coverageSamples = coverageSamples;
+    coverageSamples = coverageSamples_;
 	if(ssfact >= 1.0)
 		scaleFactor = ssfact;
 	if(w > 0)
@@ -259,7 +259,7 @@ bool NVFBOBox::Initialize(int w, int h, float ssfact, int depthSamples_, int cov
 	if(depthSamples_ >= 0)
 		depthSamples = depthSamples_;
 	if(coverageSamples_ >= 0)
-		coverageSamples = coverageSamples;
+    coverageSamples = coverageSamples_;
 	if(tilesW > 0)
 		tilesw = tilesW;
 	if(tilesH > 0)

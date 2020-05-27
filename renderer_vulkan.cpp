@@ -167,7 +167,7 @@ namespace vk
 
     for (int i = 0; i < paths.size(); i++)
     {
-      if (fd = fopen(paths[i].c_str(), "rb"))
+      if ((fd = fopen(paths[i].c_str(), "rb")))
       {
         break;
       }

@@ -515,7 +515,7 @@ bool NVFBOBoxVK::setMSAA(int depthSamples_, int coverageSamples_)
   if (depthSamples_ >= 0)
     depthSamples = depthSamples_;
   if (coverageSamples_ >= 0)
-    coverageSamples = coverageSamples;
+    coverageSamples = coverageSamples_;
   //
   // New MSAA requires to re-create the render-passes
   // New renderpasses requires re-creating render-targets
@@ -536,7 +536,7 @@ bool NVFBOBoxVK::Initialize(NVK &nvk, int w, int h, float ssfact, int depthSampl
     if(depthSamples_ >= 0)
         depthSamples = depthSamples_;
     if(coverageSamples_ >= 0)
-        coverageSamples = coverageSamples;
+        coverageSamples = coverageSamples_;
     if(tilesW > 0)
         tilesw = tilesW;
     if(tilesH > 0)

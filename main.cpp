@@ -149,7 +149,7 @@ void MyWindow::processUI(int width, int height, double dt)
       // camera help
       //ImGui::SetNextWindowCollapsed(0);
       const char *txt = getHelpText();
-      ImGui::Text(txt);
+      ImGui::Text("%s",txt);
       ImGui::EndChild();
     }
     const int avg = 10;
@@ -358,6 +358,7 @@ int main(int argc, char **argv)
     false,   //debug;
     false,  //robust;
     false,  //forward;
+    false,  //stereo;
     NULL   //share;
   );
 
@@ -367,7 +368,7 @@ int main(int argc, char **argv)
   if (!myWindow.open(0, 0, 1280, 720, "gl_vk_supersampled", context))
   {
     LOGE("Failed to initialize the sample\n");
-    return false;
+    return EXIT_FAILURE;
   }
 
   // -------------------------------
@@ -446,6 +447,6 @@ int main(int argc, char **argv)
       myWindow.onWindowResize(myWindow.getWidth(), myWindow.getHeight());
     }
   }
-  return 0;
+  return EXIT_SUCCESS;
 }
 

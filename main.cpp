@@ -27,7 +27,7 @@
 #define DEFAULT_RENDERER 1
 #include "renderer_base.h"
 
-#include <imgui/imgui_impl_gl.h>
+#include <imgui/backends/imgui_impl_gl.h>
 #include <nvgl/contextwindow_gl.hpp>
 
 
@@ -37,15 +37,16 @@
 class MyWindow : public AppWindowCameraInertia
 {
 private:
-  bool                dummybool;
-  int                 dummy[5];
+  bool dummybool;
+  int  dummy[5];
+
 public:
   ImGuiH::Registry    m_guiRegistry;
-  nvgl::ContextWindow     m_contextWindowGL;
+  nvgl::ContextWindow m_contextWindowGL;
 
   MyWindow();
 
-  bool open(int posX, int posY, int width, int height, const char* title, const nvgl::ContextWindowCreateInfo &context);
+  bool open(int posX, int posY, int width, int height, const char* title, const nvgl::ContextWindowCreateInfo& context);
   void processUI(int width, int height, double time);
 
   virtual void onWindowClose() override;
@@ -60,12 +61,11 @@ public:
   virtual void onWindowRefresh() override;
 };
 
-MyWindow::MyWindow() :
-  AppWindowCameraInertia(
-    vec3f(0.0f, 1.0f, -3.0f), vec3f(0, 0, 0)
-    //vec3f(-0.10, 0.4, -1.0), vec3f(-0.20, -0.43, 0.41)
+MyWindow::MyWindow()
+    : AppWindowCameraInertia(vec3f(0.0f, 1.0f, -3.0f), vec3f(0, 0, 0)
+                             //vec3f(-0.10, 0.4, -1.0), vec3f(-0.20, -0.43, 0.41)
 
-  )
+    )
 {
 }
 
@@ -74,63 +74,65 @@ MyWindow::MyWindow() :
 // Help
 //-----------------------------------------------------------------------------
 const char* g_sampleHelp =
-"'`' or 'u' : toggle UI\n"
-"space: toggles continuous rendering\n"
-"'s': toggle stats\n"
-;
+    "'`' or 'u' : toggle UI\n"
+    "space: toggles continuous rendering\n"
+    "'s': toggle stats\n";
 const char* g_sampleHelpCmdLine =
-"---------- Cmd-line arguments ----------\n"
-"-s 0 or 1 : stats\n"
-"-q <msaa> : MSAA\n"
-"-r <ss_val> : supersampling (1.0,1.5,2.0)\n"
-"----------------------------------------\n"
-;
+    "---------- Cmd-line arguments ----------\n"
+    "-s 0 or 1 : stats\n"
+    "-q <msaa> : MSAA\n"
+    "-r <ss_val> : supersampling (1.0,1.5,2.0)\n"
+    "----------------------------------------\n";
 
 //-----------------------------------------------------------------------------
 // Global variables
 //-----------------------------------------------------------------------------
-Renderer*	g_renderers[10];
-int			              g_numRenderers = 0;
-Renderer*		          g_pCurRenderer = NULL;
-int				            g_curRenderer = DEFAULT_RENDERER;
-int                   g_numCmdBuffers = 16;
-double                g_statsCpuTime = 0;
-double                g_statsGpuTime = 0;
-nvh::Profiler         g_profiler;
-int                   g_MSAA = 8;
-float                 g_Supersampling = 1.5;
-int                   g_downSamplingMode = 1;
-MatrixBufferGlobal    g_globalMatrices;
-bool                  g_helpText = false;
-bool                  g_bUseUI = true;
-#define               HELPDURATION         5.0
+Renderer*          g_renderers[10];
+int                g_numRenderers  = 0;
+Renderer*          g_pCurRenderer  = NULL;
+int                g_curRenderer   = DEFAULT_RENDERER;
+int                g_numCmdBuffers = 16;
+double             g_statsCpuTime  = 0;
+double             g_statsGpuTime  = 0;
+nvh::Profiler      g_profiler;
+int                g_MSAA             = 8;
+float              g_Supersampling    = 1.5;
+int                g_downSamplingMode = 1;
+MatrixBufferGlobal g_globalMatrices;
+bool               g_helpText = false;
+bool               g_bUseUI   = true;
+#define HELPDURATION 5.0
 
 //
 // Camera animation: captured using '1' in the sample. Then copy and paste...
 //
-struct CameraAnim { vec3f eye, focus; float sleep; };
+struct CameraAnim
+{
+  vec3f eye, focus;
+  float sleep;
+};
 
 //------------------------------------------------------------------------------
 //
 //------------------------------------------------------------------------------
-#define COMBO_MSAA      0
-#define COMBO_SS        1
-#define COMBO_DS        2
-#define COMBO_RENDERER  3
+#define COMBO_MSAA 0
+#define COMBO_SS 1
+#define COMBO_DS 2
+#define COMBO_RENDERER 3
 void MyWindow::processUI(int width, int height, double dt)
 {
   // Update imgui configuration
-  auto &imgui_io = ImGui::GetIO();
-  imgui_io.DeltaTime = static_cast<float>(dt);
+  auto& imgui_io       = ImGui::GetIO();
+  imgui_io.DeltaTime   = static_cast<float>(dt);
   imgui_io.DisplaySize = ImVec2(width, height);
 
   ImGui::NewFrame();
   ImGui::SetNextWindowBgAlpha(0.1);
   ImGui::SetNextWindowSize(ImVec2(450, 0), ImGuiCond_FirstUseEver);
-  if (ImGui::Begin("NVIDIA " PROJECT_NAME, nullptr))
+  if(ImGui::Begin("NVIDIA " PROJECT_NAME, nullptr))
   {
     //ImGui::PushItemWidth(200);
-#ifdef USEOPENGL
+#ifdef NVP_SUPPORTS_OPENGL
     ImGui::Text("gl and vk version");
 #else
     ImGui::Text("vk only version");
@@ -143,18 +145,19 @@ void MyWindow::processUI(int width, int height, double dt)
     ImGui::Separator();
 
     ImGui::Text("('h' to toggle help)");
-    if (g_helpText)
+    if(g_helpText)
     {
       ImGui::BeginChild("Help", ImVec2(400, 110), true);
       // camera help
       //ImGui::SetNextWindowCollapsed(0);
-      const char *txt = getHelpText();
-      ImGui::Text("%s",txt);
+      const char* txt = getHelpText();
+      ImGui::Text("%s", txt);
       ImGui::EndChild();
     }
-    const int avg = 10;
-    int avgf = g_profiler.getTotalFrames();
-    if (avgf % avg == avg - 1) {
+    const int avg  = 10;
+    int       avgf = g_profiler.getTotalFrames();
+    if(avgf % avg == avg - 1)
+    {
       nvh::Profiler::TimerInfo info;
       g_profiler.getTimerInfo("frame", info);
       g_statsCpuTime = info.cpu.average;
@@ -165,7 +168,7 @@ void MyWindow::processUI(int width, int height, double dt)
     float cpuTimeF = float(g_statsCpuTime);
     float maxTimeF = std::max(std::max(cpuTimeF, gpuTimeF), 0.0001f);
 
-    ImGui::Text("Frame     [ms]: %2.1f", dt*1000.0f);
+    ImGui::Text("Frame     [ms]: %2.1f", dt * 1000.0f);
     ImGui::Text("Scene GPU [ms]: %2.3f", gpuTimeF / 1000.0f);
     ImGui::ProgressBar(gpuTimeF / maxTimeF, ImVec2(0.0f, 0.0f));
     ImGui::Text("Scene CPU [ms]: %2.3f", cpuTimeF / 1000.0f);
@@ -178,9 +181,9 @@ void MyWindow::processUI(int width, int height, double dt)
 //------------------------------------------------------------------------------
 //
 //------------------------------------------------------------------------------
-bool MyWindow::open(int posX, int posY, int width, int height, const char* title, const nvgl::ContextWindowCreateInfo &context)
+bool MyWindow::open(int posX, int posY, int width, int height, const char* title, const nvgl::ContextWindowCreateInfo& context)
 {
-  if (!AppWindowCameraInertia::open(posX, posY, width, height, title, true))
+  if(!AppWindowCameraInertia::open(posX, posY, width, height, title, true))
     return false;
   m_contextWindowGL.init(&context, m_internal, title);
   ImGui::InitGL();
@@ -188,7 +191,7 @@ bool MyWindow::open(int posX, int posY, int width, int height, const char* title
   //
   // UI
   //
-  auto &imgui_io = ImGui::GetIO();
+  auto& imgui_io       = ImGui::GetIO();
   imgui_io.IniFilename = nullptr;
   m_guiRegistry.enumAdd(COMBO_MSAA, 1, "MSAA 1x");
   m_guiRegistry.enumAdd(COMBO_MSAA, 4, "MSAA 4x");
@@ -199,7 +202,7 @@ bool MyWindow::open(int posX, int posY, int width, int height, const char* title
   m_guiRegistry.enumAdd(COMBO_DS, 0, "1 Tap");
   m_guiRegistry.enumAdd(COMBO_DS, 1, "5 Taps");
   m_guiRegistry.enumAdd(COMBO_DS, 2, "9 Taps on Alpha");
-  for (int i = 0; i < g_numRenderers; i++)
+  for(int i = 0; i < g_numRenderers; i++)
   {
     m_guiRegistry.enumAdd(COMBO_RENDERER, i, g_renderers[i]->getName());
   }
@@ -223,12 +226,14 @@ void MyWindow::onWindowClose()
 //------------------------------------------------------------------------------
 void MyWindow::onWindowResize(int w, int h)
 {
-  if (w == 0) w = getWidth();
-  if (h == 0) h = getHeight();
+  if(w == 0)
+    w = getWidth();
+  if(h == 0)
+    h = getHeight();
   AppWindowCameraInertia::onWindowResize(w, h);
-  if (g_pCurRenderer)
+  if(g_pCurRenderer)
   {
-    if (g_pCurRenderer->bFlipViewport())
+    if(g_pCurRenderer->bFlipViewport())
     {
       m_projection *= nvmath::scale_mat4(nvmath::vec3(1, -1, 1));
     }
@@ -247,15 +252,15 @@ void MyWindow::onKeyboard(NVPWindow::KeyCode key, MyWindow::ButtonAction action,
 {
   AppWindowCameraInertia::onKeyboard(key, action, mods, x, y);
 
-  if (action == MyWindow::BUTTON_RELEASE)
+  if(action == MyWindow::BUTTON_RELEASE)
     return;
-  switch (key)
+  switch(key)
   {
-  case NVPWindow::KEY_F1:
-    break;
-    //...
-  case NVPWindow::KEY_F12:
-    break;
+    case NVPWindow::KEY_F1:
+      break;
+      //...
+    case NVPWindow::KEY_F12:
+      break;
   }
 }
 
@@ -265,24 +270,24 @@ void MyWindow::onKeyboard(NVPWindow::KeyCode key, MyWindow::ButtonAction action,
 void MyWindow::onKeyboardChar(unsigned char key, int mods, int x, int y)
 {
   AppWindowCameraInertia::onKeyboardChar(key, mods, x, y);
-  switch (key)
+  switch(key)
   {
-  case '1':
-    m_camera.print_look_at(true);
-    break;
-  case '2': // dumps the position and scale of current object
-    break;
-  case '0':
-    m_bAdjustTimeScale = true;
-  case 'h':
-    LOGI(g_sampleHelpCmdLine);
-    g_helpText ^= 1;
-    break;
-  case '`':
-  case 'u':
-    g_bUseUI ^= 1;
-    break;
-    break;
+    case '1':
+      m_camera.print_look_at(true);
+      break;
+    case '2':  // dumps the position and scale of current object
+      break;
+    case '0':
+      m_bAdjustTimeScale = true;
+    case 'h':
+      LOGI(g_sampleHelpCmdLine);
+      g_helpText ^= 1;
+      break;
+    case '`':
+    case 'u':
+      g_bUseUI ^= 1;
+      break;
+      break;
   }
 }
 
@@ -299,13 +304,14 @@ int refreshCmdBuffers()
 //------------------------------------------------------------------------------
 void MyWindow::onWindowRefresh()
 {
-  if (!g_pCurRenderer) {
+  if(!g_pCurRenderer)
+  {
     return;
   }
 
   AppWindowCameraInertia::onWindowRefresh();
 
-  if (!g_pCurRenderer->valid())
+  if(!g_pCurRenderer->valid())
   {
     glClearColor(0.5, 0.0, 0.0, 0.0);
     glClear(GL_COLOR_BUFFER_BIT);
@@ -314,7 +320,7 @@ void MyWindow::onWindowRefresh()
   }
   float dt = (float)m_realtime.getFrameDT();
 
-  int width = getWidth();
+  int width  = getWidth();
   int height = getHeight();
 
 
@@ -324,8 +330,9 @@ void MyWindow::onWindowRefresh()
   g_profiler.beginFrame();
   {
     g_pCurRenderer->display(m_camera, m_projection);
-    ImDrawData *imguiDrawData;
-    if (g_bUseUI) {
+    ImDrawData* imguiDrawData;
+    if(g_bUseUI)
+    {
       processUI(width, height, dt);
       ImGui::Render();
       imguiDrawData = ImGui::GetDrawData();
@@ -339,33 +346,32 @@ void MyWindow::onWindowRefresh()
 //------------------------------------------------------------------------------
 // Main initialization point
 //------------------------------------------------------------------------------
-int main(int argc, char **argv)
+int main(int argc, char** argv)
 {
-  NVPSystem system(argv[0], PROJECT_NAME);
+  NVPSystem system(PROJECT_NAME);
 
   // you can create more than only one
   static MyWindow myWindow;
   // -------------------------------
   // Basic OpenGL settings
   //
-  nvgl::ContextWindowCreateInfo context(
-    4,      //major;
-    3,      //minor;
-    false,   //core;
-    1,      //MSAA;
-    24,     //depth bits
-    8,      //stencil bits
-    false,   //debug;
-    false,  //robust;
-    false,  //forward;
-    false,  //stereo;
-    NULL   //share;
+  nvgl::ContextWindowCreateInfo context(4,      //major;
+                                        3,      //minor;
+                                        false,  //core;
+                                        1,      //MSAA;
+                                        24,     //depth bits
+                                        8,      //stencil bits
+                                        false,  //debug;
+                                        false,  //robust;
+                                        false,  //forward;
+                                        false,  //stereo;
+                                        NULL    //share;
   );
 
   // -------------------------------
   // Create the window
   //
-  if (!myWindow.open(0, 0, 1280, 720, "gl_vk_supersampled", context))
+  if(!myWindow.open(0, 0, 1280, 720, "gl_vk_supersampled", context))
   {
     LOGE("Failed to initialize the sample\n");
     return EXIT_FAILURE;
@@ -374,30 +380,30 @@ int main(int argc, char **argv)
   // -------------------------------
   // Parse arguments/options
   //
-  for (int i = 1; i < argc; i++)
+  for(int i = 1; i < argc; i++)
   {
-    if (strlen(argv[i]) <= 1)
+    if(strlen(argv[i]) <= 1)
       continue;
-    switch (argv[i][1])
+    switch(argv[i][1])
     {
-    case 'u':
-      g_bUseUI = atoi(argv[++i]) ? true : false;
-      break;
-    case 'q':
-      g_MSAA = atoi(argv[++i]);
-      LOGI("g_MSAA set to %d\n", g_MSAA);
-      break;
-    case 'r':
-      g_Supersampling = atof(argv[++i]);
-      LOGI("g_Supersampling set to %.2f\n", g_Supersampling);
-      break;
-    case 'd':
-      break;
-    default:
-      LOGE("Wrong command-line\n");
-    case 'h':
-      LOGI(g_sampleHelpCmdLine);
-      break;
+      case 'u':
+        g_bUseUI = atoi(argv[++i]) ? true : false;
+        break;
+      case 'q':
+        g_MSAA = atoi(argv[++i]);
+        LOGI("g_MSAA set to %d\n", g_MSAA);
+        break;
+      case 'r':
+        g_Supersampling = atof(argv[++i]);
+        LOGI("g_Supersampling set to %.2f\n", g_Supersampling);
+        break;
+      case 'd':
+        break;
+      default:
+        LOGE("Wrong command-line\n");
+      case 'h':
+        LOGI(g_sampleHelpCmdLine);
+        break;
     }
   }
 
@@ -414,30 +420,30 @@ int main(int argc, char **argv)
   myWindow.m_contextWindowGL.swapInterval(0);
   myWindow.onWindowResize();
 
-  while (myWindow.pollEvents())
+  while(myWindow.pollEvents())
   {
     myWindow.idle();
-    if (myWindow.m_renderCnt > 0)
+    if(myWindow.m_renderCnt > 0)
     {
       myWindow.m_renderCnt--;
       myWindow.onWindowRefresh();
     }
-    if (myWindow.m_guiRegistry.checkValueChange(COMBO_MSAA))
+    if(myWindow.m_guiRegistry.checkValueChange(COMBO_MSAA))
     {
       g_profiler.reset(1);
       g_pCurRenderer->updateMSAA(g_MSAA);
     }
-    if (myWindow.m_guiRegistry.checkValueChange(COMBO_SS))
+    if(myWindow.m_guiRegistry.checkValueChange(COMBO_SS))
     {
       g_profiler.reset(1);
       g_pCurRenderer->updateViewport(0, 0, myWindow.getWidth(), myWindow.getHeight(), g_Supersampling);
     }
-    if (myWindow.m_guiRegistry.checkValueChange(COMBO_DS))
+    if(myWindow.m_guiRegistry.checkValueChange(COMBO_DS))
     {
       g_profiler.reset(1);
       g_pCurRenderer->setDownSamplingMode(g_downSamplingMode);
     }
-    if (myWindow.m_guiRegistry.checkValueChange(COMBO_RENDERER))
+    if(myWindow.m_guiRegistry.checkValueChange(COMBO_RENDERER))
     {
       g_pCurRenderer->terminateGraphics();
       g_pCurRenderer = g_renderers[g_curRenderer];
@@ -449,4 +455,3 @@ int main(int argc, char **argv)
   }
   return EXIT_SUCCESS;
 }
-

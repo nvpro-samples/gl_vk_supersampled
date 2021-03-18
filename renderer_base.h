@@ -46,7 +46,7 @@ using namespace nvmath;
 #   define  LOGFLUSH()
 #endif
 
-#ifndef NOGZLIB
+#ifdef NVP_SUPPORTS_GZLIB
 #   include "zlib.h"
 #endif
 

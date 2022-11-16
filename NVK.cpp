@@ -953,11 +953,10 @@ bool NVK::utInitialize(WindowSurface* pWindowSurface)
     VkInstanceCreateInfo      instanceInfo    = { VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO, NULL };
     VkDeviceQueueCreateInfo   queueInfo       = { VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO, NULL };
     VkDeviceCreateInfo        devInfo         = { VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO, NULL };
-    std::vector<char*> extension_names;
+    std::vector<char*>                  instance_extension_names;
     std::vector<VkLayerProperties>      instance_layers;
     std::vector<VkPhysicalDevice>       physical_devices;
-    std::vector<VkExtensionProperties>  device_extensions;
-    std::vector<VkLayerProperties>      device_layers;
+    std::vector<std::vector<char*>>     device_extension_names;
     std::vector<VkExtensionProperties>  instance_extensions;
     uint32_t count = 0;
 
@@ -981,18 +980,19 @@ bool NVK::utInitialize(WindowSurface* pWindowSurface)
     result = vkEnumerateInstanceExtensionProperties(NULL, &count, NULL);
     assert(result == VK_SUCCESS);
     instance_extensions.resize(count);
-    extension_names.resize(count);
+    instance_extension_names.resize(count);
     result = vkEnumerateInstanceExtensionProperties(NULL, &count, &instance_extensions[0]);
     for(int i=0; i<instance_extensions.size(); i++)
     {
         LOGI("%d: Extension %s\n", i, instance_extensions[i].extensionName);
-        extension_names[i] = instance_extensions[i].extensionName;
+        instance_extension_names[i] = instance_extensions[i].extensionName;
     }
     // TODO: enumerate the extensions we want to include...
     // set enabled_extension_count
-    // fill extension_names
+    // fill instance_extension_names
 
     static const char *instance_validation_layers[] = {
+      //"VK_LAYER_KHRONOS_validation",
       "VK_LAYER_LUNARG_core_validation",
       //"VK_LAYER_LUNARG_image",
       "VK_LAYER_LUNARG_object_tracker",
@@ -1017,8 +1017,8 @@ bool NVK::utInitialize(WindowSurface* pWindowSurface)
     // add some layers here ?
     instanceInfo.enabledLayerCount = instance_validation_layers_sz;
     instanceInfo.ppEnabledLayerNames = instance_validation_layers;
-    instanceInfo.enabledExtensionCount = (uint32_t)extension_names.size();
-    instanceInfo.ppEnabledExtensionNames = &extension_names[0];
+    instanceInfo.enabledExtensionCount = (uint32_t)instance_extension_names.size();
+    instanceInfo.ppEnabledExtensionNames = &instance_extension_names[0];
 
     result = vkCreateInstance(&instanceInfo, NULL, &m_instance);
     if(result == VK_ERROR_INCOMPATIBLE_DRIVER) {
@@ -1080,6 +1080,7 @@ bool NVK::utInitialize(WindowSurface* pWindowSurface)
         return false;
     }
     LOGI("found %d Physical Devices (using device 0)\n", physical_devices.size());
+    device_extension_names.resize(physical_devices.size());
     for(int j=0; j<physical_devices.size(); j++)
     {
         // redundant for displaying infos
@@ -1111,6 +1112,7 @@ bool NVK::utInitialize(WindowSurface* pWindowSurface)
             );
         }
 
+        m_gpu.features2 = {VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2};
         vkGetPhysicalDeviceFeatures2(physical_devices[j], &m_gpu.features2); // too many stuff to display
         vkGetPhysicalDeviceQueueFamilyProperties(physical_devices[j], &count, NULL);
         m_gpu.queueProperties.resize(count);
@@ -1131,6 +1133,7 @@ bool NVK::utInitialize(WindowSurface* pWindowSurface)
         assert(!result);
         if(count > 0)
         {
+            std::vector<VkLayerProperties> device_layers;
             device_layers.resize(count);
             result = vkEnumerateDeviceLayerProperties(physical_devices[j], &count, &device_layers[0]);
             for(int i=0; i<device_layers.size(); i++)
@@ -1140,21 +1143,24 @@ bool NVK::utInitialize(WindowSurface* pWindowSurface)
         }
         result = vkEnumerateDeviceExtensionProperties(physical_devices[j], NULL, &count, NULL);
         assert(!result);
+        std::vector<VkExtensionProperties> device_extensions;
         device_extensions.resize(count);
         result = vkEnumerateDeviceExtensionProperties(physical_devices[j], NULL, &count, &device_extensions[0]);
-        extension_names.resize(device_extensions.size() );
+        device_extension_names[j].resize(device_extensions.size() );
         for(int i=0; i<device_extensions.size(); i++)
         {
             LOGI("%d: HW Device Extension: %s\n", i,device_extensions[i].extensionName);
-            extension_names[i] = device_extensions[i].extensionName;
+            device_extension_names[j][i] = device_extensions[i].extensionName;
         }
     }
     //
     // Take one physical device
     //
-    m_gpu.device = physical_devices[0];
+    size_t chosenDevice = 0;
+    m_gpu.device = physical_devices[chosenDevice];
     vkGetPhysicalDeviceProperties(m_gpu.device, &m_gpu.properties);
     vkGetPhysicalDeviceMemoryProperties(m_gpu.device, &m_gpu.memoryProperties);
+    m_gpu.features2 = {VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2};
     vkGetPhysicalDeviceFeatures2(m_gpu.device, &m_gpu.features2);
     vkGetPhysicalDeviceQueueFamilyProperties(m_gpu.device, &count, NULL);
     m_gpu.queueProperties.resize(count);
@@ -1170,34 +1176,20 @@ bool NVK::utInitialize(WindowSurface* pWindowSurface)
             break;
         }
     }
-    //
-    // DeviceLayer Props
-    //
-    result = vkEnumerateDeviceLayerProperties(m_gpu.device, &count, NULL);
-    assert(!result);
-    if(count > 0)
-    {
-        device_layers.resize(count);
-        result = vkEnumerateDeviceLayerProperties(m_gpu.device, &count, &device_layers[0]);
-    }
-    result = vkEnumerateDeviceExtensionProperties(m_gpu.device, NULL, &count, NULL);
-    assert(!result);
-    //
-    // Device extensions
-    //
-    device_extensions.resize(count);
-    result = vkEnumerateDeviceExtensionProperties(m_gpu.device, NULL, &count, &device_extensions[0]);
+
     //
     // Create the device
     //
+    std::vector<float> priorities(m_gpu.queueProperties[queueFamilyIndex].queueCount, 1.0f);
     queueInfo.queueFamilyIndex = queueFamilyIndex;
     queueInfo.queueCount =  m_gpu.queueProperties[queueFamilyIndex].queueCount;
+    queueInfo.pQueuePriorities = priorities.data();
     devInfo.queueCreateInfoCount = 1;
     devInfo.pQueueCreateInfos = &queueInfo;
     devInfo.enabledLayerCount = instance_validation_layers_sz;
     devInfo.ppEnabledLayerNames = instance_validation_layers;
-    devInfo.enabledExtensionCount = (uint32_t)extension_names.size();
-    devInfo.ppEnabledExtensionNames = &(extension_names[0]);
+    devInfo.enabledExtensionCount = (uint32_t)device_extension_names[chosenDevice].size();
+    devInfo.ppEnabledExtensionNames = &(device_extension_names[chosenDevice][0]);
     result = vkCreateDevice(m_gpu.device, &devInfo, NULL, &m_device);
     if (result != VK_SUCCESS) {
         return false;

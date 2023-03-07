@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2021, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2016-2023, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,6 +33,7 @@
 #ifdef WIN32
 #include <float.h>
 #endif
+#include <inttypes.h>
 #include <math.h>
 
 #include <string.h>
@@ -1079,7 +1080,7 @@ bool NVK::utInitialize(WindowSurface* pWindowSurface)
     if (result != VK_SUCCESS) {
         return false;
     }
-    LOGI("found %d Physical Devices (using device 0)\n", physical_devices.size());
+    LOGI("found %zu Physical Devices (using device 0)\n", physical_devices.size());
     device_extension_names.resize(physical_devices.size());
     for(int j=0; j<physical_devices.size(); j++)
     {
@@ -1106,7 +1107,7 @@ bool NVK::utInitialize(WindowSurface* pWindowSurface)
         }
         for(unsigned int i=0; i<m_gpu.memoryProperties.memoryHeapCount; i++)
         {
-            LOGI("Memory heap %d: size:%uMb %s\n", i,
+            LOGI("Memory heap %d: size:%" PRIu64 "Mb %s\n", i,
                 m_gpu.memoryProperties.memoryHeaps[i].size/(1024*1024),
                 m_gpu.memoryProperties.memoryHeaps[i].flags&VK_MEMORY_HEAP_DEVICE_LOCAL_BIT?"VK_MEMORY_HEAP_DEVICE_LOCAL_BIT":""
             );

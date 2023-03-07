@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2021, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2016-2023, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -273,7 +273,7 @@ void MyWindow::onKeyboardChar(unsigned char key, int mods, int x, int y)
     case '0':
       m_bAdjustTimeScale = true;
     case 'h':
-      LOGI(g_sampleHelpCmdLine);
+      LOGI("%s", g_sampleHelpCmdLine);
       g_helpText ^= 1;
       break;
     case '`':
@@ -395,7 +395,7 @@ int main(int argc, char** argv)
       default:
         LOGE("Wrong command-line\n");
       case 'h':
-        LOGI(g_sampleHelpCmdLine);
+        LOGI("%s", g_sampleHelpCmdLine);
         break;
     }
   }

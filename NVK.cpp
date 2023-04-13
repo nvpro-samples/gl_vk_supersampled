@@ -1151,7 +1151,12 @@ bool NVK::utInitialize(WindowSurface* pWindowSurface)
         for(int i=0; i<device_extensions.size(); i++)
         {
             LOGI("%d: HW Device Extension: %s\n", i,device_extensions[i].extensionName);
-            device_extension_names[j][i] = device_extensions[i].extensionName;
+            // When device_extensions leaves the scope, VkExtensionProperties will free extensionName, so we need to copy it.
+            // We cannot free this data within this method, because that causes a crash after vkCreateDevice.
+            int len = strlen(device_extensions[i].extensionName) + 1; // +1 for \0
+            char* copiedName = new char[len];
+            std::memcpy(copiedName, device_extensions[i].extensionName, len);
+            device_extension_names[j][i] = copiedName;
         }
     }
     //

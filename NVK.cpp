@@ -1191,7 +1191,7 @@ bool NVK::utInitialize(WindowSurface* pWindowSurface)
     devInfo.ppEnabledLayerNames = instance_validation_layers;
     devInfo.enabledExtensionCount = (uint32_t)device_extension_names[chosenDevice].size();
     std::vector<char*> chosenDeviceExtensions(device_extension_names[chosenDevice].size());
-    for(int i=0;i<device_extension_names[chosenDevice].size();i++) chosenDeviceExtensions[i] = device_extension_names[chosenDevice][i].data();
+    for (int i = 0; i < device_extension_names[chosenDevice].size(); i++) chosenDeviceExtensions[i] = device_extension_names[chosenDevice][i].data();
     devInfo.ppEnabledExtensionNames = chosenDeviceExtensions.data();
     result = vkCreateDevice(m_gpu.device, &devInfo, NULL, &m_device);
     if (result != VK_SUCCESS) {

@@ -121,7 +121,7 @@ namespace vk
     virtual bool terminateGraphics();
     virtual void waitForGPUIdle();
 
-    virtual void display(const InertiaCamera& camera, const mat4f& projection);
+    virtual void display(const InertiaCamera& camera, const glm::mat4& projection);
 
     virtual void updateMSAA(int MSAA);
 
@@ -276,7 +276,7 @@ namespace vk
     //--------------------------------------------------------------------------
     // Buffers for general UBOs
     //
-    m_matrix.Sz = sizeof(vec4f) * 4 * 2;
+    m_matrix.Sz = sizeof(glm::vec4) * 4 * 2;
     m_matrix.buffer = nvk.utCreateAndFillBuffer(&m_cmdPool, m_matrix.Sz, NULL, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, m_matrix.bufferMem);
     //--------------------------------------------------------------------------
     // descriptor set
@@ -352,7 +352,7 @@ namespace vk
   //------------------------------------------------------------------------------
   //
   //------------------------------------------------------------------------------
-  void RendererVk::display(const InertiaCamera& camera, const mat4f& projection)
+  void RendererVk::display(const InertiaCamera& camera, const glm::mat4& projection)
   {
     float w, h;
     std::vector<VkCommandBuffer> &cmdBufferQueue = m_cmdBufferQueue[m_cmdSceneIdx];
@@ -496,8 +496,8 @@ namespace vk
       (NVK::PipelineVertexInputStateCreateInfo(
         NVK::VertexInputBindingDescription(0/*binding*/, sizeof(Vertex)/*stride*/, VK_VERTEX_INPUT_RATE_VERTEX),
         NVK::VertexInputAttributeDescription(0/*location*/, 0/*binding*/, VK_FORMAT_R32G32B32_SFLOAT, 0) // pos
-        (1/*location*/, 0/*binding*/, VK_FORMAT_R32G32B32_SFLOAT, sizeof(vec3f)) // normal
-        (2/*location*/, 0/*binding*/, VK_FORMAT_R32G32B32A32_SFLOAT, 2 * sizeof(vec3f)) // color
+        (1/*location*/, 0/*binding*/, VK_FORMAT_R32G32B32_SFLOAT, sizeof(glm::vec3)) // normal
+        (2/*location*/, 0/*binding*/, VK_FORMAT_R32G32B32A32_SFLOAT, 2 * sizeof(glm::vec3)) // color
       ))
       (NVK::PipelineInputAssemblyStateCreateInfo(VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST, VK_FALSE))
       (NVK::PipelineShaderStageCreateInfo(

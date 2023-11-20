@@ -105,7 +105,7 @@ namespace glstandard
     virtual bool initGraphics(int w, int h, float SSScale, int MSAA);
     virtual bool terminateGraphics();
 
-    virtual void display(const InertiaCamera& camera, const mat4f& projection);
+    virtual void display(const InertiaCamera& camera, const glm::mat4& projection);
 
     virtual void updateMSAA(int MSAA);
 
@@ -143,7 +143,7 @@ namespace glstandard
   //------------------------------------------------------------------------------
   //
   //------------------------------------------------------------------------------
-  void RendererStandard::display(const InertiaCamera& camera, const mat4f& projection)
+  void RendererStandard::display(const InertiaCamera& camera, const glm::mat4& projection)
   {
     const nvgl::ProfilerGL::Section profile(m_profilerGL, "frame");
 
@@ -179,8 +179,8 @@ namespace glstandard
     glBindVertexBuffer(1, s_vbofur, 0, sizeof(Vertex));
     glBindVertexBuffer(2, s_vbofur, 0, sizeof(Vertex));
     glVertexAttribFormat(0, 3, GL_FLOAT, GL_FALSE, 0);
-    glVertexAttribFormat(1, 3, GL_FLOAT, GL_FALSE, sizeof(vec3f));
-    glVertexAttribFormat(2, 4, GL_FLOAT, GL_FALSE, 2 * sizeof(vec3f));
+    glVertexAttribFormat(1, 3, GL_FLOAT, GL_FALSE, sizeof(glm::vec3));
+    glVertexAttribFormat(2, 4, GL_FLOAT, GL_FALSE, 2 * sizeof(glm::vec3));
     //
     // Draw!
     //

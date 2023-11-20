@@ -55,7 +55,7 @@ public:
 };
 
 MyWindow::MyWindow()
-    : AppWindowCameraInertia(vec3f(0.0f, 1.0f, -3.0f), vec3f(0, 0, 0)
+    : AppWindowCameraInertia(glm::vec3(0.0f, 1.0f, -3.0f), glm::vec3(0, 0, 0)
                              //vec3f(-0.10, 0.4, -1.0), vec3f(-0.20, -0.43, 0.41)
 
     )
@@ -101,7 +101,7 @@ bool               g_bUseUI   = true;
 //
 struct CameraAnim
 {
-  vec3f eye, focus;
+  glm::vec3 eye, focus;
   float sleep;
 };
 
@@ -228,7 +228,7 @@ void MyWindow::onWindowResize(int w, int h)
   {
     if(g_pCurRenderer->bFlipViewport())
     {
-      m_projection *= nvmath::scale_mat4(nvmath::vec3(1, -1, 1));
+      m_projection *= glm::scale(glm::mat4(1.f), glm::vec3(1, -1, 1));
     }
     //
     // update the token buffer in which the viewport setup happens for token rendering

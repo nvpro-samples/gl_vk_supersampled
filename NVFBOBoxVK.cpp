@@ -45,8 +45,8 @@
 #include <vector>
 
 #include "nvh/nvprint.hpp"
-#include "nvmath/nvmath.h"
-using namespace nvmath;
+#include <glm/glm.hpp>
+using namespace glm;
 
 // declared in renderer_vulkan.cpp
 namespace vk {
@@ -273,9 +273,9 @@ bool NVFBOBoxVK::initRenderPass()
       m_pipelines[i] = m_pnvk->createGraphicsPipeline(NVK::GraphicsPipelineCreateInfo
           (m_pipelineLayout, m_downsamplePass,/*subpass*/0,/*basePipelineHandle*/0,/*basePipelineIndex*/0,/*flags*/0)
           (NVK::PipelineVertexInputStateCreateInfo(
-              NVK::VertexInputBindingDescription    (0/*binding*/, 2*sizeof(vec3f)/*stride*/, VK_VERTEX_INPUT_RATE_VERTEX),
+              NVK::VertexInputBindingDescription    (0/*binding*/, 2*sizeof(glm::vec3)/*stride*/, VK_VERTEX_INPUT_RATE_VERTEX),
               NVK::VertexInputAttributeDescription  (0/*location*/, 0/*binding*/, VK_FORMAT_R32G32B32_SFLOAT, 0            /*offset*/ ) // pos
-                                                      (1/*location*/, 0/*binding*/, VK_FORMAT_R32G32B32_SFLOAT, sizeof(vec3f)/*offset*/ )
+                                                      (1/*location*/, 0/*binding*/, VK_FORMAT_R32G32B32_SFLOAT, sizeof(glm::vec3)/*offset*/ )
           ) )
           (NVK::PipelineInputAssemblyStateCreateInfo(VK_PRIMITIVE_TOPOLOGY_TRIANGLE_FAN, VK_FALSE/*primitiveRestartEnable*/) )
           (NVK::PipelineShaderStageCreateInfo(VK_SHADER_STAGE_VERTEX_BIT, m_pnvk->createShaderModule(vsPassthrough.c_str(), vsPassthrough.size() ), "main") )
@@ -684,22 +684,22 @@ bool NVFBOBoxVK::Initialize(NVK &nvk, int w, int h, float ssfact, int depthSampl
     //
     // Buffers for general UBOs
     //
-    vec2f texinfo(w,h);
-    m_texInfo.Sz = sizeof(vec2f);
+    glm::vec2 texinfo(w,h);
+    m_texInfo.Sz = sizeof(glm::vec2);
     m_texInfo.buffer        = nvk.utCreateAndFillBuffer(&m_cmdPool, m_texInfo.Sz, &texinfo, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, m_texInfo.bufferMem);
     //
     // Create buffer for fullscreen quad
     //
-    static vec3f quad[] = {
-    vec3f(-1.0, -1.0, 0.0),
-    vec3f(0,0,0),
-    vec3f( 1.0, -1.0, 0.0),
-    vec3f(1,0,0),
-    vec3f( 1.0,  1.0, 0.0),
-    vec3f(1,1,0),
-    vec3f(-1.0,  1.0, 0.0),
-    vec3f(0,1,0) };
-    m_quadBuffer.buffer        = nvk.utCreateAndFillBuffer(&m_cmdPool, 4*2*sizeof(vec3f), quad, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, m_quadBuffer.bufferMem);
+    static glm::vec3 quad[] = {
+    glm::vec3(-1.0, -1.0, 0.0),
+    glm::vec3(0,0,0),
+    glm::vec3( 1.0, -1.0, 0.0),
+    glm::vec3(1,0,0),
+    glm::vec3( 1.0,  1.0, 0.0),
+    glm::vec3(1,1,0),
+    glm::vec3(-1.0,  1.0, 0.0),
+    glm::vec3(0,1,0) };
+    m_quadBuffer.buffer        = nvk.utCreateAndFillBuffer(&m_cmdPool, 4*2*sizeof(glm::vec3), quad, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, m_quadBuffer.bufferMem);
     //
     // FBO and related resources
     //

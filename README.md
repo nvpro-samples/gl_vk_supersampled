@@ -1,3 +1,7 @@
+# DEPRECATED
+
+This sample is from earlier versions of the Vulkan API and we do not recommend it anymore.
+
 # Super-sampled rendering in Vulkan
 
 This sample show a Vulkan implementation of the super-sampled technique explained here:
